@@ -1133,7 +1133,7 @@ function detailMarkup(record,which){
  <div class="calendar-legend"><span><i class="legend-dot calendar-workday"></i> Workday</span><span><i class="legend-dot calendar-rest"></i> Rest day</span><span><i class="legend-dot calendar-regular"></i> Regular holiday</span><span><i class="legend-dot calendar-special"></i> Special holiday</span><span><i class="legend-dot calendar-absent"></i> Absent</span></div>
  <div class="attendance-calendar" data-attendance-calendar="${key}" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
  ${['S','M','T','W','T','F','S'].map(d=>`<b style="font-size:10px;text-align:center">${d}</b>`).join('')}
- ${(()=>{let out='';const [yy,mo,dd]=period.min.split('-').map(Number),[ey,em,ed]=period.max.split('-').map(Number);const first=new Date(yy,mo-1,dd).getDay();for(let i=0;i<first;i++)out+='<span></span>';for(let dt=new Date(yy,mo-1,dd);dt<=new Date(ey,em-1,ed);dt.setDate(dt.getDate()+1)){const date=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');const isAbsent=abs.includes(date),entry=ot.find(e=>e.date===date),holiday=holidayForDate(date),dow=dt.getDay(),isWork=scheduleForDate(date).working,shade=holiday?(holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special'):isWork?'calendar-workday':'calendar-rest';out+=`<button type="button" class="attendance-day ${shade} ${isAbsent?'absent':entry?'worked':''} ${entry?'has-ot':''}" data-day-pick="${key}|${date}" ${holiday?`data-holiday-detail="${date}"`:''}><b>${dt.getDate()}</b>${entry?`<small>${Number(entry.hours)||0}h OT</small>`:''}</button>`;}return out;})()}
+ ${(()=>{let out='';const [yy,mo,dd]=period.min.split('-').map(Number),[ey,em,ed]=period.max.split('-').map(Number);const first=new Date(yy,mo-1,dd).getDay();for(let i=0;i<first;i++)out+='<span></span>';for(let dt=new Date(yy,mo-1,dd);dt<=new Date(ey,em-1,ed);dt.setDate(dt.getDate()+1)){const date=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');const isAbsent=abs.includes(date),entry=ot.find(e=>e.date===date),holiday=holidayForDate(date),dow=dt.getDay(),isWork=scheduleForDate(date).working,shade=holiday?(holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special'):isWork?'calendar-workday':'calendar-rest';out+=`<button type="button" class="attendance-day ${isAbsent?'calendar-absent':shade} ${!isAbsent&&entry?'worked':''} ${entry?'has-ot':''}" data-day-pick="${key}|${date}" ${holiday?`data-holiday-detail="${date}"`:''}><b>${dt.getDate()}</b>${entry?`<small>${Number(entry.hours)||0}h OT</small>`:''}</button>`;}return out;})()}
  </div><div class="holiday-info" data-record-holiday-info hidden></div>
  <dialog class="attendance-dialog" data-day-dialog="${key}">
   <div class="picker-head"><div><h3 data-dialog-date>Attendance</h3><p class="sub">Did you report to work on this date?</p></div><button type="button" data-dialog-close aria-label="Close">✕</button></div>
@@ -1181,14 +1181,24 @@ function recalcSavedRecord(record){
 function renderMonthlyHistory(){
  const root=get('monthlyHistoryTable');if(!root)return;
  const sorted=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month));
- if(!sorted.length){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  const rows=sorted.map(r=>['first','second'].map((which,i)=>{
+  if((r.deletedCutoffs||[]).includes(which))return '';
   const x=r[which]||{},label=i===0?'First':'Second';
   const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
   const month=new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'});
-  return `<tr><td>${month}</td><td>${label}</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
+  return `<tr><td>${month}</td><td><span>${label}</span><button type="button" class="history-delete-cutoff" data-delete-cutoff="${r.month}|${which}" aria-label="Delete ${label} cutoff for ${month}" title="Delete this cutoff">×</button></td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
+ if(!rows){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  root.innerHTML=`<table class="payroll-history-table"><colgroup><col style="width:22%"><col style="width:17%"><col style="width:21%"><col style="width:19%"><col style="width:21%"></colgroup><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
+ root.querySelectorAll('[data-delete-cutoff]').forEach(btn=>btn.addEventListener('click',()=>{
+  const [month,which]=btn.dataset.deleteCutoff.split('|'),record=monthlyHistory.find(r=>r.month===month);
+  if(!record)return;
+  const label=which==='first'?'First':'Second';
+  if(!window.confirm(`Delete ${label} cutoff from ${monthLabel(month)} payroll history? This only removes the row from Payroll History. The saved cutoff data in the planner will remain.`))return;
+  record.deletedCutoffs=Array.from(new Set([...(record.deletedCutoffs||[]),which]));
+  saveMonthlyHistoryData();
+  renderMonthlyHistory();
+ }));
 }
 
 function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
@@ -1932,6 +1942,32 @@ main.content-main{
  #monthlyHistoryTable .payroll-history-table th,
  #monthlyHistoryTable .payroll-history-table td{padding:7px 1px!important;font-size:8px!important}
 }
+
+</style>
+<style>
+
+/* Absent days use a solid red treatment, replacing all scheduled-day shading */
+.attendance-day.calendar-absent,
+.attendance-day.absent,
+.attendance-day.calendar-workday.absent,
+.attendance-day.calendar-rest.absent,
+.attendance-day.calendar-regular.absent,
+.attendance-day.calendar-special.absent{
+ background:#ffe1e1!important;
+ border:1.5px solid #d94b4b!important;
+ color:#a51f1f!important;
+ box-shadow:inset 0 0 0 1px #f4b5b5!important;
+}
+.attendance-day.calendar-absent small{color:#a51f1f!important}
+.history-delete-cutoff{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:19px!important;height:19px!important;min-width:19px!important;min-height:19px!important;
+ margin-left:4px!important;padding:0!important;border:1px solid #e2bcbc!important;
+ border-radius:50%!important;background:#fff3f3!important;color:#a52b2b!important;
+ font-size:14px!important;font-weight:800!important;line-height:1!important;
+ vertical-align:middle!important;cursor:pointer!important;
+}
+#monthlyHistoryTable .payroll-history-table td:nth-child(2){white-space:nowrap!important}
 
 </style>
 </body>
