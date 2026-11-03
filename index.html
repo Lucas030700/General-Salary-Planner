@@ -1249,7 +1249,16 @@ function monthKeyAdd(m,n){const [y,mo]=m.split('-').map(Number);const d=new Date
 function currentMonthKey(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);}
 function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
 function ensureRollingMonths(){const start=currentMonthKey();for(let i=0;i<5;i++)addMonthRecord(monthKeyAdd(start,i));}
-get('addHistoryMonth').addEventListener('click',()=>{const sorted=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month));const next=sorted.length?monthKeyAdd(sorted[sorted.length-1].month,1):currentMonthKey();if(addMonthRecord(next))get('monthlyHistoryStatus').textContent=monthLabel(next)+' added.';else get('monthlyHistoryStatus').textContent='That month is already in the history.';});
+get('addHistoryMonth').addEventListener('click',()=>{
+ const selected=get('dashboardMonth')?.value||currentMonthKey();
+ const record=ensureDashboardMonth(selected);
+ if(record){
+  recalcSavedRecord(record);
+  saveMonthlyHistoryData();
+  renderMonthlyHistory();
+  get('monthlyHistoryStatus').textContent=monthLabel(selected)+' synced from Monthly Payroll Overview.';
+ }
+});
 function refreshSavedMonthEstimates(){monthlyHistory.forEach(r=>{if(!r.first||!r.second)return;['first','second'].forEach(k=>{const x=r[k];x.holiday=holidayPayByCutoff(r.month)[k==='first'?'p15':'eom'];});recalcSavedRecord(r);});saveMonthlyHistoryData();renderMonthlyHistory();}
 
 function ensureDashboardMonth(month){
@@ -1522,7 +1531,7 @@ function renderMonthlyDashboard(){
   const projectedTakeHome=baseNet+(ot.hours?ot.extraNet:0);
   const actualRemaining=projectedTakeHome-bills;
   return `<article class="cutoff-dashboard-card ${first?'cutoff-first':'cutoff-second'}" data-cutoff-card="${which}">
-   <div class="cutoff-card-heading"><h3>${first?'FIRST CUTOFF':'SECOND CUTOFF'}</h3><span class="cutoff-period-tag">${first?'1 of 2':'2 of 2'}</span></div>
+   <div class="cutoff-card-heading"><h3>${first?'FIRST CUTOFF':'SECOND CUTOFF'}</h3></div>
    <div class="cutoff-finance-grid">
     <div class="finance-cell takehome"><small>ESTIMATED TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
     <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b></button>
@@ -1543,7 +1552,6 @@ function renderMonthlyDashboard(){
     <input type="range" min="${minRemaining}" max="${maxTarget}" step="100" value="${target}" data-target-slider="${which}" aria-label="Target remaining for ${first?'first':'second'} cutoff">
     <div class="target-range"><span>${fmt(minRemaining)} · No OT</span><span>${fmt(maxTarget)} · Max</span></div>
     </div>
-    <div class="target-result-row"><span>Projected remaining</span><b data-projected-remaining>${fmt(actualRemaining)}</b></div>
     <div class="target-result-row ot-result-row"><span>Additional OT needed</span><b data-ot-hours>${ot.hours.toFixed(1)} hrs</b></div>
    </section>
    <div class="ot-recommendation ${ot.hours?'short':''}" data-ot-recommendation>${ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs'}</div>
@@ -1551,6 +1559,8 @@ function renderMonthlyDashboard(){
   </article>`;
  }).join('');
  expandedDetails.forEach(id=>{const el=get(id);if(el)el.open=true;});
+ saveMonthlyHistoryData();
+ renderMonthlyHistory();
  bindDashboardDetailEvents(root);
  root.querySelectorAll('[data-target-slider]').forEach(slider=>{
   let committedValue=String(slider.value),commitQueued=false;
@@ -1560,8 +1570,6 @@ function renderMonthlyDashboard(){
    card.querySelector('[data-target-label]').textContent=fmt(target);
    card.querySelector('[data-cutoff-takehome]').textContent=fmt(bills+target);
    card.querySelector('[data-cutoff-remaining]').textContent=fmt(target);
-   const projectedEl=card.querySelector('[data-projected-remaining]');
-   if(projectedEl)projectedEl.textContent=fmt(target);
    card.querySelector('[data-open-money-left]').classList.toggle('negative',target<0);
   };
   const commit=()=>{
@@ -1580,9 +1588,7 @@ function renderMonthlyDashboard(){
     card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
     card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
     card.querySelector('[data-open-money-left]').classList.toggle('negative',remaining<0);
-    const projectedEl=card.querySelector('[data-projected-remaining]');
     const hoursEl=card.querySelector('[data-ot-hours]');
-    if(projectedEl)projectedEl.textContent=fmt(remaining);
     if(hoursEl)hoursEl.textContent=hours.toFixed(1)+' hrs';
     const otEl=card.querySelector('[data-ot-recommendation]');
     otEl.textContent=hours===0?'Additional OT needed: 0 hrs':(required.possible?'Additional OT needed: ':'At least additional OT needed: ')+hours.toFixed(1)+' hrs';
@@ -1608,7 +1614,13 @@ function renderMonthlyDashboard(){
 }
 get('dashboardMonth')?.addEventListener('change',()=>{
  const month=get('dashboardMonth').value;
- if(month){ensureDashboardMonth(month);renderMonthlyDashboard();renderMonthlyHistory();}
+ if(month){
+  const record=ensureDashboardMonth(month);
+  if(record)recalcSavedRecord(record);
+  saveMonthlyHistoryData();
+  renderMonthlyDashboard();
+  renderMonthlyHistory();
+ }
 });
 
 
