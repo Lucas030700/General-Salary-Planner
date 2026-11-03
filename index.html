@@ -235,7 +235,7 @@ details[open]>summary .chevron{transform:rotate(180deg)}
 </main>
 <dialog id="dayScheduleDialog" class="day-schedule-dialog">
  <form method="dialog" id="dayScheduleForm">
-  <div class="picker-head"><div><h2 id="dayScheduleTitle">Monday schedule</h2><p class="sub">Set the duty hours for this day.</p></div><button type="button" id="closeDaySchedule" aria-label="Close">✕</button></div>
+  <div class="picker-head"><div><h2 id="dayScheduleTitle">Monday</h2><p class="sub">Daily duty hours</p></div><button type="button" id="closeDaySchedule" aria-label="Close">✕</button></div>
   <label class="schedule-working-toggle"><input type="checkbox" id="dayIsWorking" checked> Working day</label>
   <div class="schedule-dialog-times" id="scheduleDialogTimes">
    <div class="field"><label for="dayDutyStart">Starts at</label><input type="time" id="dayDutyStart" value="09:00"></div>
@@ -273,7 +273,7 @@ function compactTime(value){const [hh,mm]=String(value||'09:00').split(':').map(
 function scheduleForDate(date){return scheduleForDay(new Date(date+'T00:00:00').getDay());}
 function syncLegacyWorkdays(){document.querySelectorAll('.workday').forEach(el=>el.checked=!!scheduleForDay(el.value).working);}
 function renderWeeklySchedule(){const root=get('weekScheduleGrid');if(!root)return;root.innerHTML=WEEK_DAYS.map(d=>{const x=scheduleForDay(d.v),label=x.working?`${compactTime(x.start)}–${compactTime(x.end)}`:'Rest';return `<button type="button" class="weekday-schedule-btn ${x.working?'is-working':'is-rest'}" data-schedule-day="${d.v}"><b>${d.s}</b><small>${label}</small></button>`}).join('');root.querySelectorAll('[data-schedule-day]').forEach(btn=>btn.addEventListener('click',()=>openDaySchedule(Number(btn.dataset.scheduleDay))));syncLegacyWorkdays();}
-function openDaySchedule(day){editingScheduleDay=day;const x=scheduleForDay(day),d=WEEK_DAYS.find(z=>z.v===day);get('dayScheduleTitle').textContent=d.n+' schedule';get('dayIsWorking').checked=!!x.working;get('dayDutyStart').value=x.start||'09:00';get('dayDutyEnd').value=x.end||'18:00';get('scheduleDialogTimes').classList.toggle('is-disabled',!x.working);get('dayScheduleDialog').showModal();}
+function openDaySchedule(day){editingScheduleDay=day;const x=scheduleForDay(day),d=WEEK_DAYS.find(z=>z.v===day);get('dayScheduleTitle').textContent=d.n;get('dayIsWorking').checked=!!x.working;get('dayDutyStart').value=x.start||'09:00';get('dayDutyEnd').value=x.end||'18:00';get('scheduleDialogTimes').classList.toggle('is-disabled',!x.working);get('dayScheduleDialog').showModal();}
 get('dayIsWorking').addEventListener('change',()=>get('scheduleDialogTimes').classList.toggle('is-disabled',!get('dayIsWorking').checked));
 get('closeDaySchedule').addEventListener('click',()=>get('dayScheduleDialog').close());get('cancelDaySchedule').addEventListener('click',()=>get('dayScheduleDialog').close());
 get('saveDaySchedule').addEventListener('click',()=>{if(editingScheduleDay===null)return;weeklySchedule[editingScheduleDay]={working:get('dayIsWorking').checked,start:get('dayDutyStart').value||'09:00',end:get('dayDutyEnd').value||'18:00'};get('dayScheduleDialog').close();renderWeeklySchedule();get('dutyStart').value=weeklySchedule[1].start;get('dutyEnd').value=weeklySchedule[1].end;rebuildAutoHolidayEntries();calculate();refreshSavedMonthEstimates();renderPayCalendar();try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));}catch(e){} });
@@ -604,6 +604,83 @@ function sizeStickyHeader(){const shell=document.querySelector('.sticky-shell');
 .attendance-day.calendar-workday{background:#e9f2ff!important;border-color:#b7cdee!important;color:#294d79!important}.attendance-day.calendar-rest{background:#f0f1f2!important;border-color:#d9dcdf!important;color:#69717a!important}.attendance-day.calendar-regular{background:#ffebeb!important;border-color:#edb8b8!important;color:#963b3b!important}.attendance-day.calendar-special{background:#fff3d9!important;border-color:#efd39a!important;color:#8a6217!important}
 .holiday-info{margin:8px 0 2px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#f8faf8;font-size:11px}.holiday-info b{display:block;font-size:12px;margin-bottom:3px}.holiday-tap{cursor:pointer}
 @media(max-width:520px){.panel{padding:8px!important}.accordion-content{padding:6px 8px!important}.topline{gap:6px}.hero .metric strong{font-size:18px!important}}
+
+/* Final compact day editor: intentionally overrides earlier dialog styling */
+#dayScheduleDialog.day-schedule-dialog{
+  box-sizing:border-box!important;
+  width: min(72vw, 276px)!important;
+  max-width:276px!important;
+  min-width:0!important;
+  max-height: min(70vh, 310px)!important;
+  margin:auto!important;
+  padding:11px!important;
+  border:1px solid #dce5df!important;
+  border-radius:13px!important;
+  box-shadow:0 12px 36px rgba(0,0,0,.22)!important;
+  overflow:visible!important;
+}
+#dayScheduleDialog .picker-head{
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 5px!important;
+}
+#dayScheduleDialog .picker-head h2{
+  font-size:16px!important;
+  line-height:1.15!important;
+  margin:0!important;
+  font-weight:750!important;
+}
+#dayScheduleDialog .picker-head .sub{
+  font-size:10px!important;
+  line-height:1.2!important;
+  margin:2px 0 0!important;
+}
+#dayScheduleDialog #closeDaySchedule{
+  width:27px!important;height:27px!important;min-width:27px!important;
+  padding:0!important;border-radius:8px!important;font-size:13px!important;
+}
+#dayScheduleDialog .schedule-working-toggle{
+  display:flex!important;align-items:center!important;
+  gap:6px!important;padding:5px 0 7px!important;
+  font-size:11px!important;line-height:1.2!important;
+}
+#dayScheduleDialog .schedule-working-toggle input{
+  width:14px!important;height:14px!important;margin:0!important;
+}
+#dayScheduleDialog .schedule-dialog-times{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:6px!important;align-items:end!important;
+}
+#dayScheduleDialog .schedule-dialog-times .field{
+  min-width:0!important;margin:0!important;
+}
+#dayScheduleDialog .schedule-dialog-times label{
+  display:block!important;font-size:10px!important;
+  line-height:1.2!important;margin:0 0 3px!important;
+}
+#dayScheduleDialog .schedule-dialog-times input{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  min-height:34px!important;height:34px!important;
+  padding:5px 4px!important;font-size:12px!important;
+  text-align:center!important;border-radius:7px!important;
+}
+#dayScheduleDialog .schedule-dialog-times.is-disabled{
+  opacity:.35!important;pointer-events:none!important;
+}
+#dayScheduleDialog .btnrow{
+  display:flex!important;justify-content:flex-end!important;
+  gap:6px!important;margin:9px 0 0!important;
+}
+#dayScheduleDialog .btnrow button{
+  min-height:31px!important;height:31px!important;
+  padding:5px 9px!important;font-size:10px!important;
+  line-height:1!important;border-radius:7px!important;
+}
+#dayScheduleDialog .btnrow .primary{font-weight:700!important}
+@media(max-width:380px){
+  #dayScheduleDialog.day-schedule-dialog{width: min(76vw, 266px)!important;padding:10px!important}
+}
+
 </style>
 </body>
 </html>
