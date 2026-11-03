@@ -229,6 +229,33 @@ details[open]>summary .chevron{transform:rotate(180deg)}
  .cutoff-dashboard-card .attendance-day small{font-size:8px!important}
 }
 
+
+/* Balanced cutoff financial summary */
+.cutoff-dashboard-card{padding:12px!important;border-radius:12px!important}
+.cutoff-dashboard-card h3{font-size:13px!important;margin:0 0 9px!important;letter-spacing:.01em}
+.cutoff-finance-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:stretch}
+.finance-cell{box-sizing:border-box;min-width:0;min-height:68px;border:1px solid var(--line);border-radius:9px;padding:8px 6px;background:var(--card);display:flex;flex-direction:column;justify-content:center;gap:4px;text-align:left;color:var(--ink);font:inherit}
+.finance-cell small{font-size:8px;letter-spacing:.07em;font-weight:800;color:var(--muted);line-height:1.1}
+.finance-cell b{font-size:clamp(12px,3.4vw,16px);line-height:1.1;font-weight:800;white-space:nowrap;letter-spacing:-.03em}
+.finance-cell span{font-size:8px;color:var(--muted);line-height:1.1}
+.bills-cell{cursor:pointer;border-style:dashed}
+.bills-cell:active{transform:scale(.985)}
+.finance-cell.remaining{background:#f0f7f2;border-color:#d8e8dc}
+.target-control{margin-top:11px;padding:0 2px}
+.target-label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:var(--muted);margin-bottom:3px}
+.target-label b{font-size:12px;color:var(--ink);font-weight:750}
+.target-control input[type=range]{width:100%;height:20px;margin:0;accent-color:var(--green);cursor:pointer}
+.target-range{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:-2px}
+.cutoff-dashboard-card .ot-recommendation{margin:8px 0 2px!important;padding:6px 8px!important;font-size:10px!important;line-height:1.2!important;border-radius:7px!important}
+.cutoff-dashboard-card details.dashboard-attendance{margin-top:8px!important;padding-top:6px!important}
+.cutoff-dashboard-card details.dashboard-attendance summary{font-size:10px!important}
+@media(max-width:380px){
+ .cutoff-finance-grid{gap:4px}
+ .finance-cell{min-height:62px;padding:6px 4px}
+ .finance-cell small{font-size:7px}
+ .finance-cell b{font-size:12px}
+}
+
 </style>
 </head>
 <body>
@@ -453,7 +480,7 @@ let billPickerCutoff='15';
 function renderBillPicker(which,record=null){
  billPickerCutoff=which;const isFirst=which==='15';
  get('billPickerTitle').textContent=isFirst?'Choose bills for First cutoff':'Choose bills for Second cutoff';
- get('billPickerSubtitle').textContent='Select the bills assigned to this cutoff. A bill selected here will be removed from the other cutoff for this month.';
+ get('billPickerSubtitle').textContent='Check the bills to pay from this cutoff. Unchecked bills stay assigned to the other cutoff.';
  const selectedIds=record?(record[isFirst?'first':'second']?.items||[]).map(x=>x.id):null;
  const savedAmounts={};if(record)['first','second'].forEach(k=>(record[k]?.items||[]).forEach(it=>savedAmounts[it.id]=it.amount));
  get('billPickerList').innerHTML=expenseDefs.map(([id,label])=>{const amount=record?((savedAmounts[id]??(Number(get(id).value)||0))):(Number(get(id).value)||0);const checked=record?selectedIds.includes(id):(get(id+'Cutoff').value==='15')===isFirst;return `<div class="picker-row"><label><input type="checkbox" data-picker-expense="${id}" ${checked?'checked':''}><span>${label.replace(/^\d+\. /,'')}</span></label><b>${fmt(amount)}</b></div>`}).join('');
@@ -624,23 +651,52 @@ function renderMonthlyDashboard(){
  const setText=(id,val)=>{if(get(id))get(id).textContent=fmt(val);};
  
 
+
  root.innerHTML=['first','second'].map(which=>{
-  const x=record[which],first=which==='first',ot=recommendedAdditionalOt(record,which);
-  const title=first?'1st cutoff':'2nd cutoff',balance=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
-  const otText=ot.hours===0?'OT needed: 0 hrs':(ot.possible?'OT needed: ':'OT needed: at least ')+ot.hours.toFixed(1)+' hrs';
-  return `<article class="cutoff-dashboard-card">
-   <h3>${title}</h3>
-   <div class="cutoff-amount">${fmt(x.paySuggested||0)}</div>
-   <div class="cutoff-balance ${balance>=0?'positive':'negative'}">${balance>=0?'After bills: '+fmt(balance):'Short: '+fmt(Math.abs(balance))}</div>
-   <div class="ot-recommendation ${ot.hours?'short':''}">${otText}</div>
-   <div class="cutoff-actions">
-    <button type="button" class="bill-assign-btn" data-dashboard-bills="${which}">Assign bills</button>
-    <button type="button" class="attendance-toggle" data-toggle-attendance="${which}">Attendance & OT</button>
+  const x=record[which],first=which==='first',baseNet=Number(x.paySuggested)||0,bills=Number(x.bills)||0;
+  const maxTarget=Math.max(10000,Math.ceil((basicPay()||baseNet*2)*1.5/1000)*1000);
+  const stored=Number(x.targetRemaining);
+  const target=Number.isFinite(stored)?Math.max(0,Math.min(maxTarget,stored)):Math.max(0,baseNet-bills);
+  const targetTakeHome=bills+target;
+  const ot=targetTakeHome>baseNet?recommendedAdditionalOt({...record,[which]:{...x,bills:targetTakeHome}},which):{hours:0,extraNet:0,possible:true};
+  const projectedTakeHome=baseNet+(ot.hours?ot.extraNet:0);
+  const actualRemaining=projectedTakeHome-bills;
+  return `<article class="cutoff-dashboard-card" data-cutoff-card="${which}">
+   <h3>${first?'1st Cutoff':'2nd Cutoff'}</h3>
+   <div class="cutoff-finance-grid">
+    <div class="finance-cell takehome"><small>TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
+    <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>BILLS · EDIT</small><b>${fmt(bills)}</b><span>Tap to choose bills</span></button>
+    <div class="finance-cell remaining"><small>REMAINING</small><b data-cutoff-remaining>${fmt(actualRemaining)}</b></div>
    </div>
-   <details class="dashboard-attendance" id="dashboardAttendance-${which}"><summary>Manage workdays, OT & absences</summary>${detailMarkup(record,which)}</details>
+   <div class="target-control">
+    <div class="target-label"><span>Target remaining</span><b data-target-label>${fmt(target)}</b></div>
+    <input type="range" min="0" max="${maxTarget}" step="100" value="${target}" data-target-slider="${which}" aria-label="Target remaining for ${first?'first':'second'} cutoff">
+    <div class="target-range"><span>₱0</span><span>${fmt(maxTarget)}</span></div>
+   </div>
+   <div class="ot-recommendation ${ot.hours?'short':''}" data-ot-recommendation>${ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs'}</div>
+   <details class="dashboard-attendance" id="dashboardAttendance-${which}"><summary>Workdays, OT & absences</summary>${detailMarkup(record,which)}</details>
   </article>`;
  }).join('');
  bindDashboardDetailEvents(root);
+ root.querySelectorAll('[data-target-slider]').forEach(slider=>slider.addEventListener('input',()=>{
+  const which=slider.dataset.targetSlider,x=record[which],bills=Number(x.bills)||0,target=Number(slider.value)||0;
+  x.targetRemaining=target;
+  const targetTakeHome=bills+target,baseNet=Number(x.paySuggested)||0;
+  const ot=targetTakeHome>baseNet?recommendedAdditionalOt({...record,[which]:{...x,bills:targetTakeHome}},which):{hours:0,extraNet:0,possible:true};
+  const projected=baseNet+(ot.hours?ot.extraNet:0),remaining=projected-bills;
+  const card=slider.closest('.cutoff-dashboard-card');
+  card.querySelector('[data-target-label]').textContent=fmt(target);
+  card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
+  card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
+  const otEl=card.querySelector('[data-ot-recommendation]');
+  otEl.textContent=ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs';
+  otEl.classList.toggle('short',ot.hours>0);
+  saveMonthlyHistoryData();
+ }));
+ root.querySelectorAll('[data-dashboard-bills]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.dashboardBills;activeRecordEdit={month,which};
+  renderBillPicker(which==='first'?'15':'eom',record);
+ }));
  root.querySelectorAll('[data-dashboard-bills]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.dashboardBills;activeRecordEdit={month,which};
   renderBillPicker(which==='first'?'15':'eom',record);
