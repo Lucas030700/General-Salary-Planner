@@ -395,6 +395,156 @@ details[open]>summary .chevron{transform:rotate(180deg)}
  .finance-cell b{font-size:clamp(11px,3.5vw,15px)!important}
 }
 
+
+/* iPhone 15 Pro optimized layout (393 × 852 CSS px), with safe-area support */
+:root{--phone-gutter:12px}
+html{
+ width:100%;
+ min-height:100%;
+ overflow-x:hidden;
+ -webkit-text-size-adjust:100%;
+}
+body{
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ overflow-x:hidden;
+ padding-bottom:env(safe-area-inset-bottom,0px);
+}
+button,input,select,textarea{font-family:inherit}
+button{touch-action:manipulation}
+.sticky-shell{
+ padding-top:env(safe-area-inset-top,0px)!important;
+}
+header{
+ padding:15px var(--phone-gutter) 14px!important;
+ border-radius:0 0 20px 20px!important;
+}
+.topline{align-items:center!important;gap:8px!important}
+.eyebrow{font-size:9px!important;letter-spacing:.12em!important}
+h1{font-size:clamp(20px,5.4vw,23px)!important;line-height:1.12!important;margin:5px 0 4px!important}
+header p{font-size:12px!important;line-height:1.25!important}
+.pill{font-size:10px!important;padding:6px 8px!important}
+.tabbar{
+ width:calc(100% - 2*var(--phone-gutter))!important;
+ max-width:none!important;
+ gap:5px!important;
+ margin:0 auto!important;
+ padding:6px 0 7px!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+.tabbar .tabbtn{
+ min-width:0!important;
+ min-height:42px!important;
+ padding:7px 4px!important;
+ font-size:10px!important;
+ line-height:1.15!important;
+ overflow-wrap:anywhere!important;
+ border-radius:10px!important;
+}
+.content-main{
+ width:100%!important;
+ max-width:100%!important;
+ padding:8px var(--phone-gutter) calc(72px + env(safe-area-inset-bottom,0px))!important;
+ margin:0 auto!important;
+}
+.monthly-dashboard{
+ width:100%!important;
+ max-width:100%!important;
+ margin:0 auto 10px!important;
+ padding:9px!important;
+ border-radius:14px!important;
+}
+.dashboard-heading{
+ grid-template-columns:minmax(0,1fr)!important;
+ gap:7px!important;
+ margin-bottom:8px!important;
+}
+.dashboard-heading h2{font-size:16px!important}
+.dashboard-month{
+ width:100%!important;
+ max-width:none!important;
+ display:grid!important;
+ grid-template-columns:88px minmax(0,1fr)!important;
+ gap:8px!important;
+ align-items:center!important;
+}
+.dashboard-month label{font-size:10px!important}
+.dashboard-month input{
+ width:100%!important;
+ min-height:40px!important;
+ font-size:16px!important;
+ padding:7px 9px!important;
+}
+.dashboard-cutoffs{grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+.cutoff-dashboard-card{
+ width:100%!important;
+ padding:8px!important;
+ border-radius:12px!important;
+}
+.cutoff-dashboard-card>h3{font-size:13px!important;margin-bottom:6px!important}
+.cutoff-finance-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important}
+.finance-cell{
+ min-width:0!important;
+ min-height:68px!important;
+ padding:7px 3px!important;
+ border-radius:10px!important;
+}
+.finance-cell small{font-size:7px!important;min-height:2.5em!important;letter-spacing:0!important}
+.finance-cell b{font-size:clamp(11px,3.55vw,15px)!important}
+.target-control{margin-top:7px!important}
+.target-control input[type=range]{height:28px!important}
+.target-label{font-size:10px!important}
+.target-label b{font-size:12px!important}
+.target-range{font-size:8px!important}
+.cutoff-dashboard-card .ot-recommendation{
+ min-height:38px!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ text-align:center!important;
+ font-size:11px!important;
+ padding:7px!important;
+}
+.cutoff-dashboard-card details.dashboard-attendance summary{
+ min-height:42px!important;
+ display:flex!important;
+ align-items:center!important;
+ font-size:11px!important;
+}
+.attendance-calendar{gap:3px!important}
+.attendance-day{min-height:38px!important}
+.attendance-day.has-ot{min-height:40px!important}
+.attendance-day.has-ot small{font-size:8px!important}
+.panel,.widepanel,.section,.accordion-panel{min-width:0!important;max-width:100%!important}
+input:not([type=range]):not([type=checkbox]),select,textarea{
+ max-width:100%;
+ font-size:16px;
+}
+#cloudAccountBar{
+ padding:7px 10px calc(8px + env(safe-area-inset-bottom,0px))!important;
+ gap:6px!important;
+}
+#cloudAccountBar button{min-height:36px!important;font-size:10px!important}
+dialog{
+ max-width:calc(100vw - 28px)!important;
+ max-height:calc(100dvh - 40px - env(safe-area-inset-top,0px))!important;
+ overflow:auto!important;
+ overscroll-behavior:contain;
+}
+@media(max-width:374px){
+ :root{--phone-gutter:9px}
+ .tabbar .tabbtn{font-size:9px!important}
+ .finance-cell b{font-size:11px!important}
+ .finance-cell small{font-size:6.5px!important}
+}
+@media(min-width:394px) and (max-width:520px){
+ :root{--phone-gutter:14px}
+}
+@supports(height:100dvh){
+ body{min-height:100dvh}
+}
+
 </style>
 </head>
 <body>
