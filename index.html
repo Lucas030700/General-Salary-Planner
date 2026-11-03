@@ -545,6 +545,87 @@ dialog{
  body{min-height:100dvh}
 }
 
+
+/* Approved iPhone 15 Pro visual direction */
+@media(max-width:600px){
+ :root{--phone-gutter:10px}
+ .content-main{padding:7px var(--phone-gutter) calc(76px + env(safe-area-inset-bottom,0px))!important}
+ .monthly-dashboard{padding:9px!important;border-radius:15px!important}
+ .dashboard-heading{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(126px,42%)!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 9px!important;
+ }
+ .dashboard-heading h2{font-size:clamp(14px,4.1vw,17px)!important;line-height:1.12!important}
+ .dashboard-month{
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  gap:3px!important;
+ }
+ .dashboard-month label{font-size:9px!important;font-weight:750!important}
+ .dashboard-month input{min-height:38px!important;font-size:14px!important;padding:6px 7px!important}
+ .dashboard-cutoffs{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+ .cutoff-dashboard-card{padding:0!important;overflow:hidden!important;border-radius:13px!important;background:#fff!important}
+ .cutoff-card-heading{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  min-height:43px!important;padding:8px 11px!important;
+  background:#e7f4ed!important;color:#18231f!important;
+ }
+ .cutoff-card-heading h3{font-size:14px!important;font-weight:800!important;margin:0!important}
+ .cutoff-card-heading span{font-size:22px!important;line-height:1!important}
+ .cutoff-finance-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:5px!important;padding:7px 7px 0!important;
+ }
+ .finance-cell{
+  min-width:0!important;width:100%!important;min-height:72px!important;
+  padding:7px 3px!important;border-radius:11px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;text-align:center!important;background:#fff!important;
+ }
+ .finance-cell small{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:2.35em!important;text-align:center!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+  font-size:clamp(7px,1.8vw,9px)!important;line-height:1.15!important;letter-spacing:.015em!important;
+ }
+ .finance-cell b{
+  display:block!important;width:100%!important;text-align:center!important;
+  font-size:clamp(11px,3.5vw,16px)!important;line-height:1.15!important;
+  white-space:nowrap!important;font-variant-numeric:tabular-nums!important;
+ }
+ .finance-cell span{display:none!important}
+ .finance-cell.remaining{background:#f3f8f4!important}
+ .target-control{margin:8px 10px 0!important;padding:0!important}
+ .target-label{font-size:11px!important;margin-bottom:4px!important}
+ .target-label b{font-size:13px!important}
+ .target-control input[type=range]{height:27px!important}
+ .target-range{font-size:9px!important;margin-top:0!important}
+ .cutoff-dashboard-card .ot-recommendation{
+  margin:8px 9px 9px!important;min-height:39px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  text-align:center!important;font-size:11px!important;padding:7px!important;border-radius:9px!important;
+ }
+ .cutoff-dashboard-card details.dashboard-attendance{
+  margin:0 9px 9px!important;padding:0!important;border-top:1px solid var(--line)!important;
+ }
+ .cutoff-dashboard-card details.dashboard-attendance summary{
+  min-height:43px!important;display:flex!important;align-items:center!important;
+  font-size:11px!important;font-weight:750!important;
+ }
+}
+@media(max-width:374px){
+ .dashboard-heading{grid-template-columns:minmax(0,1fr) minmax(116px,42%)!important}
+ .dashboard-heading h2{font-size:14px!important}
+ .finance-cell{min-height:67px!important}
+ .finance-cell b{font-size:11px!important}
+}
+
 </style>
 </head>
 <body>
@@ -988,10 +1069,10 @@ function renderMonthlyDashboard(){
   const projectedTakeHome=baseNet+(ot.hours?ot.extraNet:0);
   const actualRemaining=projectedTakeHome-bills;
   return `<article class="cutoff-dashboard-card" data-cutoff-card="${which}">
-   <h3>${first?'1st Cutoff':'2nd Cutoff'}</h3>
+   <div class="cutoff-card-heading"><h3>${first?'1st Cutoff':'2nd Cutoff'}</h3><span aria-hidden="true">⌄</span></div>
    <div class="cutoff-finance-grid">
     <div class="finance-cell takehome"><small>ESTIMATED TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
-    <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b><span>Tap to choose bills</span></button>
+    <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b></button>
     <div class="finance-cell remaining"><small>MONEY LEFT</small><b data-cutoff-remaining>${fmt(actualRemaining)}</b></div>
    </div>
    <div class="target-control">
