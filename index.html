@@ -1292,6 +1292,9 @@ get('saveDashboardMonth')?.addEventListener('click',()=>{
  if(!record)return;
  syncSelectedMonthBillAmounts(record);
  recalcSavedRecord(record);
+ // Saving the selected month is an explicit re-save of both cutoff records.
+ // Restore rows previously hidden with Delete, then overwrite the same month/cutoff data.
+ record.deletedCutoffs=[];
  record.saved=true;
  record.savedAt=new Date().toISOString();
  saveMonthlyHistoryData();
