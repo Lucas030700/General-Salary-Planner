@@ -17,3 +17,7 @@ FILES
 - manifest.json: installable app metadata
 - sw.js: offline app cache
 - icon-192.png / icon-512.png: app icons
+
+DISPLAY
+- The page uses a fixed mobile viewport and disables pinch/double-tap zoom on supported touch browsers.
+- Desktop browser zoom shortcuts may still be controlled by the browser itself.
