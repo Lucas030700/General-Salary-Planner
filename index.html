@@ -756,6 +756,35 @@ dialog{
  .finance-cell b{font-size:clamp(10px,3.35vw,14px)!important}
 }
 
+
+/* Compact month selector and tighter financial tiles */
+@media(max-width:600px){
+ .approved-overview-heading{grid-template-columns:minmax(0,1.2fr) 1px minmax(104px,.8fr)!important;gap:6px!important;padding:7px 8px!important}
+ .approved-overview-heading .dashboard-month{max-width:116px!important;justify-self:end!important}
+ .approved-overview-heading .dashboard-month input{min-height:32px!important;height:32px!important;font-size:11px!important;padding:4px 5px!important}
+ .approved-overview-heading .dashboard-month label{font-size:8px!important}
+ .approved-overview-heading h2{font-size:clamp(11px,3.2vw,14px)!important}
+ .overview-calendar{font-size:18px!important}
+ .overview-divider{height:34px!important}
+ .finance-cell{min-height:52px!important;height:52px!important;padding:4px 2px!important;border-radius:9px!important}
+ .cutoff-finance-grid{gap:4px!important;padding:6px 6px 0!important}
+ .finance-cell small{min-height:2em!important;font-size:6.5px!important;line-height:1.05!important}
+ .finance-cell b{font-size:clamp(10px,3.1vw,13px)!important;line-height:1.05!important}
+}
+.computation-link{
+ width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;
+ border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);
+ padding:8px 2px;text-align:left;font:inherit;cursor:pointer;
+}
+.computation-link>span{font-size:11px}
+.computation-link>b{font-size:11px;white-space:nowrap}
+.computation-link .info-mark{display:inline-flex}
+@media(max-width:380px){
+ .approved-overview-heading{grid-template-columns:minmax(0,1fr) 1px minmax(98px,.8fr)!important}
+ .approved-overview-heading .dashboard-month{max-width:108px!important}
+ .finance-cell{min-height:49px!important;height:49px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1044,7 +1073,9 @@ function detailMarkup(record,which){
   </div>
   <div class="btnrow"><button type="button" class="primary" data-dialog-save>OK</button></div>
  </dialog>
- <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary><div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div><div class="lineitem"><span>OT pay + applicable allowances</span><b>${fmt(x.otPay||0)}</b></div><div class="lineitem"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)}</b></div><div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div><div class="lineitem"><span>Money left / shortfall</span><b>${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details></div>`;
+ <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary><button type="button" class="computation-link" data-open-computation="${which}"><span>OT pay + night differential</span><b>${fmt(x.otPay||0)} <span class="info-mark">i</span></b></button><button type="button" class="computation-link" data-open-deductions="${which}"><span>Payroll deductions (SSS · PhilHealth · Pag-IBIG · Tax)</span><b>View formula <span class="info-mark">i</span></b></button><div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div><div class="lineitem"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)}</b></div><div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div><div class="lineitem"><span>Money left / shortfall</span><b class="${(x.balance||0)<0?'negative':'positive'}">${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details>
+ <dialog class="pay-breakdown-dialog" data-pay-breakdown="${which}"><div class="picker-head"><div><h3>OT Pay Computation</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div><div class="breakdown-content" data-breakdown-content="${which}"></div></dialog>
+ <dialog class="pay-breakdown-dialog" data-deduction-dialog="${which}"><div class="picker-head"><div><h3>Payroll Deduction Computation</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div><div class="breakdown-content" data-deduction-content="${which}"></div></dialog></div>`;
 }
 function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h,e.date),shiftNight=Number(e.shiftNight??scheduledNightHours(e.date));e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*24)/24;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
 
@@ -1118,6 +1149,19 @@ function syncSelectedMonthBillAmounts(record){
 }
 
 
+function buildPayrollDeductionsBreakdown(record,which){
+ const x=record[which],basic=basicPay(),sss=Math.min(1750,basic*.05)/2,philhealth=basic*.025/2,pagibig=(basic>1500?200:basic*.02)/2;
+ const halfBasic=basic/2,ot=Number(x.otPay)||0,holiday=Number(x.holiday)||0;
+ const taxable=Math.max(0,halfBasic+ot+holiday-sss-philhealth-pagibig),annual=taxable*24,tax=taxForAnnual(annual)/24;
+ const rows=[
+  ['SSS',sss,'min(₱1,750, monthly basic × 5%) ÷ 2'],
+  ['PhilHealth',philhealth,'monthly basic × 2.5% ÷ 2'],
+  ['Pag-IBIG',pagibig,'₱200 ÷ 2 when monthly basic > ₱1,500; otherwise basic × 2% ÷ 2'],
+  ['Taxable cutoff pay',taxable,'(Basic ÷ 2) + OT pay + holiday premium − SSS − PhilHealth − Pag-IBIG'],
+  ['Withholding tax',tax,'Annualized tax(taxable cutoff × 24) ÷ 24']
+ ];
+ return `<div class="breakdown-formula">This deduction schedule is calculated for this cutoff. Both first and second cutoff use the same half-month statutory contribution estimate; withholding tax is annualized.</div>${rows.map(([label,value,formula])=>`<div class="breakdown-row"><div><b>${label}</b><small>${formula}</small></div><strong>${fmt(value)}</strong></div>`).join('')}<div class="breakdown-total"><span>Total payroll deductions</span><b>${fmt(sss+philhealth+pagibig+tax)}</b></div>`;
+}
 function buildCutoffPayBreakdown(record,which){
  const x=record[which],basic=basicPay(),halfBasic=basic/2;
  const sss=Math.min(1750,basic*.05)/2,philhealth=basic*.025/2,pagibig=(basic>1500?200:basic*.02)/2;
@@ -1152,8 +1196,14 @@ function buildCutoffPayBreakdown(record,which){
 function bindDashboardDetailEvents(root){
  root.querySelectorAll('[data-open-computation]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.openComputation,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
-  const dialog=root.querySelector(`[data-pay-breakdown="${which}"]`),content=root.querySelector(`[data-breakdown-content="${which}"]`);
+  const dialog=root.querySelector(`[data-pay-breakdown="${which}"]`)||root.querySelector(`[data-dashboard-pay-breakdown="${which}"]`);
+  const content=dialog?.querySelector('.breakdown-content');
   if(record&&dialog&&content){content.innerHTML=buildCutoffPayBreakdown(record,which);dialog.showModal();}
+ }));
+ root.querySelectorAll('[data-open-deductions]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.openDeductions,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
+  const x=record?.[which],dialog=root.querySelector(`[data-deduction-dialog="${which}"]`),content=root.querySelector(`[data-deduction-content="${which}"]`);
+  if(x&&dialog&&content){content.innerHTML=buildPayrollDeductionsBreakdown(record,which);dialog.showModal();}
  }));
  root.querySelectorAll('[data-open-money-left]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.openMoneyLeft,card=btn.closest('.cutoff-dashboard-card'),dialog=root.querySelector(`[data-money-left-dialog="${which}"]`);
@@ -1249,14 +1299,10 @@ function renderMonthlyDashboard(){
   return `<article class="cutoff-dashboard-card" data-cutoff-card="${which}">
    <div class="cutoff-card-heading"><h3>${first?'1st Cutoff':'2nd Cutoff'}</h3><span aria-hidden="true">⌄</span></div>
    <div class="cutoff-finance-grid">
-    <button type="button" class="finance-cell takehome" data-open-computation="${which}"><small>ESTIMATED TAKE-HOME <span class="info-mark">i</span></small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></button>
+    <div class="finance-cell takehome"><small>ESTIMATED TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
     <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b></button>
     <button type="button" class="finance-cell remaining ${actualRemaining<0?'negative':''}" data-open-money-left="${which}"><small>MONEY LEFT <span class="info-mark">i</span></small><b data-cutoff-remaining>${fmt(actualRemaining)}</b></button>
    </div>
-   <dialog class="pay-breakdown-dialog" data-pay-breakdown="${which}">
-    <div class="picker-head"><div><h3>Estimated Take-home Breakdown</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div>
-    <div class="breakdown-content" data-breakdown-content="${which}"></div>
-   </dialog>
    <dialog class="pay-breakdown-dialog" data-money-left-dialog="${which}">
     <div class="picker-head"><div><h3>Money Left Breakdown</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div>
     <div class="breakdown-content">
@@ -1277,25 +1323,35 @@ function renderMonthlyDashboard(){
  }).join('');
  expandedDetails.forEach(id=>{const el=get(id);if(el)el.open=true;});
  bindDashboardDetailEvents(root);
- root.querySelectorAll('[data-target-slider]').forEach(slider=>slider.addEventListener('input',()=>{
-  const which=slider.dataset.targetSlider,x=record[which],bills=Number(x.bills)||0,target=Number(slider.value)||0;
-  x.targetRemaining=target;
-  const targetTakeHome=bills+target,baseNet=Number(x.paySuggested)||0;
-  const required=targetTakeHome>baseNet?recommendedAdditionalOt({...record,[which]:{...x,bills:targetTakeHome}},which):{hours:0,extraNet:0,possible:true};
-  const maxHours=maxAdditionalOtHoursForCutoff(record,which);
-  const ot={...required,hours:Math.min(required.hours,maxHours),possible:required.hours<=maxHours};
-  ot.extraNet=netIncreaseFromAdditionalOt(record,which,ot.hours);
-  const projected=baseNet+(ot.hours?ot.extraNet:0),remaining=projected-bills;
-  const card=slider.closest('.cutoff-dashboard-card');
-  card.querySelector('[data-target-label]').textContent=fmt(target);
-  card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
-  card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
-  card.querySelector('[data-open-money-left]').classList.toggle('negative',remaining<0);
-  const otEl=card.querySelector('[data-ot-recommendation]');
-  otEl.textContent=ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs';
-  otEl.classList.toggle('short',ot.hours>0);
-  saveMonthlyHistoryData();
- }));
+ root.querySelectorAll('[data-target-slider]').forEach(slider=>{
+  const preview=()=>{
+   const which=slider.dataset.targetSlider,x=record[which],bills=Number(x.bills)||0,target=Number(slider.value)||0;
+   const card=slider.closest('.cutoff-dashboard-card'),baseNet=Number(x.paySuggested)||0;
+   card.querySelector('[data-target-label]').textContent=fmt(target);
+   // Instant preview while dragging; full OT estimate runs only after release.
+   card.querySelector('[data-cutoff-takehome]').textContent=fmt(bills+target);
+   card.querySelector('[data-cutoff-remaining]').textContent=fmt(target);
+   card.querySelector('[data-open-money-left]').classList.toggle('negative',target<0);
+  };
+  slider.addEventListener('input',preview);
+  slider.addEventListener('change',()=>{
+   const which=slider.dataset.targetSlider,x=record[which],bills=Number(x.bills)||0,target=Number(slider.value)||0;
+   x.targetRemaining=target;
+   const targetTakeHome=bills+target,baseNet=Number(x.paySuggested)||0;
+   const required=targetTakeHome>baseNet?recommendedAdditionalOt({...record,[which]:{...x,bills:targetTakeHome}},which):{hours:0,extraNet:0,possible:true};
+   const maxHours=maxAdditionalOtHoursForCutoff(record,which);
+   const hours=Math.min(required.hours,maxHours),extraNet=netIncreaseFromAdditionalOt(record,which,hours);
+   const projected=baseNet+(hours?extraNet:0),remaining=projected-bills;
+   const card=slider.closest('.cutoff-dashboard-card');
+   card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
+   card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
+   card.querySelector('[data-open-money-left]').classList.toggle('negative',remaining<0);
+   const otEl=card.querySelector('[data-ot-recommendation]');
+   otEl.textContent=hours===0?'Additional OT needed: 0 hrs':(required.possible?'Additional OT needed: ':'At least additional OT needed: ')+hours.toFixed(1)+' hrs';
+   otEl.classList.toggle('short',hours>0);
+   saveMonthlyHistoryData();
+  });
+ });
  root.querySelectorAll('[data-dashboard-bills]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.dashboardBills;activeRecordEdit={month,which};
   renderBillPicker(which==='first'?'15':'eom',record);
