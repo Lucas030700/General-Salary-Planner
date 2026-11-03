@@ -865,6 +865,43 @@ input[type="range"][data-target-slider]{
 }
 .target-control{position:relative!important;z-index:3!important}
 
+
+/* Cutoff identity and independent target panels */
+.cutoff-dashboard-card .ot-recommendation{display:none!important}
+.cutoff-dashboard-card.cutoff-first{border:1.5px solid #b9d8fb!important;background:#fff!important}
+.cutoff-dashboard-card.cutoff-second{border:1.5px solid #d8c5fa!important;background:#fff!important}
+.cutoff-dashboard-card.cutoff-first .cutoff-card-heading{background:#e5f1ff!important;color:#174a83!important}
+.cutoff-dashboard-card.cutoff-second .cutoff-card-heading{background:#f0e9ff!important;color:#59338b!important}
+.cutoff-period-tag{font-size:9px!important;font-weight:750!important;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid currentColor}
+.cutoff-dashboard-card.cutoff-first .finance-cell.takehome{background:#f0f7ff!important;border-color:#d4e6fb!important}
+.cutoff-dashboard-card.cutoff-second .finance-cell.takehome{background:#f7f2ff!important;border-color:#e5d9fa!important}
+.cutoff-dashboard-card.cutoff-first .target-panel{background:#f3f8ff;border:1px solid #d5e7fb;border-radius:11px;padding:9px;margin-top:10px}
+.cutoff-dashboard-card.cutoff-second .target-panel{background:#f8f4ff;border:1px solid #e5d9fa;border-radius:11px;padding:9px;margin-top:10px}
+.target-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;font-weight:800;letter-spacing:.045em;margin-bottom:5px}
+.target-panel-heading b{font-size:15px;letter-spacing:0;font-variant-numeric:tabular-nums}
+.cutoff-first .target-panel-heading{color:#174a83}
+.cutoff-second .target-panel-heading{color:#59338b}
+.cutoff-first .target-control input[type=range]{accent-color:#2879ce!important}
+.cutoff-second .target-control input[type=range]{accent-color:#8252c7!important}
+.cutoff-first input[type=range][data-target-slider]{accent-color:#2879ce!important}
+.cutoff-second input[type=range][data-target-slider]{accent-color:#8252c7!important}
+.target-control{margin-top:0!important}
+.target-label{display:none!important}
+.target-result-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 7px;margin-top:5px;border-radius:7px;background:rgba(255,255,255,.78);font-size:9px;color:var(--muted)}
+.target-result-row b{font-size:11px;color:var(--ink);font-variant-numeric:tabular-nums}
+.target-result-row.ot-result-row{margin-top:4px}
+.cutoff-first .target-result-row b{color:#174a83}
+.cutoff-second .target-result-row b{color:#59338b}
+.history-cutoff-label{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:4px 7px;border-radius:999px;font-size:10px;font-weight:750}
+.history-first{background:#e5f1ff;color:#174a83}
+.history-second{background:#f0e9ff;color:#59338b}
+@media(max-width:380px){
+ .target-panel{padding:7px!important}
+ .target-panel-heading b{font-size:13px}
+ .target-result-row{font-size:8px}
+ .target-result-row b{font-size:10px}
+}
+
 </style>
 </head>
 <body>
@@ -1187,7 +1224,7 @@ function renderMonthlyHistory(){
   const x=r[which]||{},label=i===0?'First':'Second';
   const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
   const month=new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'});
-  return `<tr><td class="history-month-cell"><span class="history-month-label">${month}</span><button type="button" class="history-delete-cutoff" data-delete-cutoff="${r.month}|${which}" aria-label="Delete ${label} cutoff for ${month}">Delete</button></td><td>${label}</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
+  return `<tr><td class="history-month-cell"><span class="history-month-label">${month}</span><button type="button" class="history-delete-cutoff" data-delete-cutoff="${r.month}|${which}" aria-label="Delete ${label} cutoff for ${month}">Delete</button></td><td><span class="history-cutoff-label ${which==='first'?'history-first':'history-second'}">${label}</span></td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
  if(!rows){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  root.innerHTML=`<table class="payroll-history-table"><colgroup><col style="width:22%"><col style="width:17%"><col style="width:21%"><col style="width:19%"><col style="width:21%"></colgroup><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -1484,8 +1521,8 @@ function renderMonthlyDashboard(){
   ot.extraNet=netIncreaseFromAdditionalOt(record,which,ot.hours);
   const projectedTakeHome=baseNet+(ot.hours?ot.extraNet:0);
   const actualRemaining=projectedTakeHome-bills;
-  return `<article class="cutoff-dashboard-card" data-cutoff-card="${which}">
-   <div class="cutoff-card-heading"><h3>${first?'1st Cutoff':'2nd Cutoff'}</h3><span aria-hidden="true">⌄</span></div>
+  return `<article class="cutoff-dashboard-card ${first?'cutoff-first':'cutoff-second'}" data-cutoff-card="${which}">
+   <div class="cutoff-card-heading"><h3>${first?'FIRST CUTOFF':'SECOND CUTOFF'}</h3><span class="cutoff-period-tag">${first?'1 of 2':'2 of 2'}</span></div>
    <div class="cutoff-finance-grid">
     <div class="finance-cell takehome"><small>ESTIMATED TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
     <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b></button>
@@ -1500,11 +1537,15 @@ function renderMonthlyDashboard(){
      <p class="sub">Formula: Estimated take-home − Monthly expenses.</p>
     </div>
    </dialog>
-   <div class="target-control">
-    <div class="target-label"><span>Target remaining</span><b data-target-label>${fmt(target)}</b></div>
+   <section class="target-panel">
+    <div class="target-panel-heading"><span>TARGET REMAINING</span><b data-target-label>${fmt(target)}</b></div>
+    <div class="target-control">
     <input type="range" min="${minRemaining}" max="${maxTarget}" step="100" value="${target}" data-target-slider="${which}" aria-label="Target remaining for ${first?'first':'second'} cutoff">
     <div class="target-range"><span>${fmt(minRemaining)} · No OT</span><span>${fmt(maxTarget)} · Max</span></div>
-   </div>
+    </div>
+    <div class="target-result-row"><span>Projected remaining</span><b data-projected-remaining>${fmt(actualRemaining)}</b></div>
+    <div class="target-result-row ot-result-row"><span>Additional OT needed</span><b data-ot-hours>${ot.hours.toFixed(1)} hrs</b></div>
+   </section>
    <div class="ot-recommendation ${ot.hours?'short':''}" data-ot-recommendation>${ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs'}</div>
    <details class="dashboard-attendance" id="dashboardAttendance-${which}"><summary>Workdays, OT & absences</summary>${detailMarkup(record,which)}</details>
   </article>`;
@@ -1519,6 +1560,8 @@ function renderMonthlyDashboard(){
    card.querySelector('[data-target-label]').textContent=fmt(target);
    card.querySelector('[data-cutoff-takehome]').textContent=fmt(bills+target);
    card.querySelector('[data-cutoff-remaining]').textContent=fmt(target);
+   const projectedEl=card.querySelector('[data-projected-remaining]');
+   if(projectedEl)projectedEl.textContent=fmt(target);
    card.querySelector('[data-open-money-left]').classList.toggle('negative',target<0);
   };
   const commit=()=>{
@@ -1537,6 +1580,10 @@ function renderMonthlyDashboard(){
     card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
     card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
     card.querySelector('[data-open-money-left]').classList.toggle('negative',remaining<0);
+    const projectedEl=card.querySelector('[data-projected-remaining]');
+    const hoursEl=card.querySelector('[data-ot-hours]');
+    if(projectedEl)projectedEl.textContent=fmt(remaining);
+    if(hoursEl)hoursEl.textContent=hours.toFixed(1)+' hrs';
     const otEl=card.querySelector('[data-ot-recommendation]');
     otEl.textContent=hours===0?'Additional OT needed: 0 hrs':(required.possible?'Additional OT needed: ':'At least additional OT needed: ')+hours.toFixed(1)+' hrs';
     otEl.classList.toggle('short',hours>0);
