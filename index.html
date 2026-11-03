@@ -1106,7 +1106,7 @@ function calculate(){
  expenseDefs.forEach(([id])=>set(id+'Val',fmt(Number(get(id).value)||0)));
  set('sss',fmt(sss));set('philhealth',fmt(philhealth));set('pagibig',fmt(pagibig));set('tax',fmt(tax));set('calcTaxable',fmt(taxable));set('calcAnnualTaxable',fmt(taxable*12));set('calcAnnualTax',fmt(annualTax));set('deductions',fmt(deductions));
  set('otPay',fmt(0));set('nightPay',fmt(0));set('gross',fmt(gross));set('deductSummary',fmt(deductions));set('net',fmt(net));set('basicLine',fmt(basic));
- set('heroNet',fmt(net));set('totalExpenses',fmt(expenses));set('heroExpenses',fmt(expenses));set('left',fmt(left));set('heroLeft',fmt(left));set('leftPct',net>0?((left/net)*100).toFixed(1)+'% of take-home remaining':'');if(get('dashboardMonth')?.value&&typeof renderMonthlyDashboard==='function')renderMonthlyDashboard();
+ set('heroNet',fmt(net));set('totalExpenses',fmt(expenses));set('heroExpenses',fmt(expenses));set('left',fmt(left));set('heroLeft',fmt(left));set('leftPct',net>0?((left/net)*100).toFixed(1)+'% of take-home remaining':'');if(get('dashboardMonth')?.value&&typeof renderMonthlyDashboard==='function'){renderMonthlyDashboard();if(typeof syncActiveDashboardMonthToHistory==='function')syncActiveDashboardMonthToHistory();}
  const benefit=get('regularBenefit');if(benefit)benefit.querySelector('strong').textContent=fmt(regPay)+'/month';
  const note=get('statusNote');if(note)note.textContent=isRegular?'Regular selected: estimated ₱2,000 monthly transport benefit included. Confirm eligibility with HR.':'';
  const hero=get('heroLeft');if(hero){hero.classList.toggle('positive',left>=0);hero.classList.toggle('negative',left<0);}
@@ -1266,6 +1266,18 @@ function ensureDashboardMonth(month){
  let record=monthlyHistory.find(r=>r.month===month);
  if(!record){addMonthRecord(month);record=monthlyHistory.find(r=>r.month===month);}
  return record||null;
+}
+
+// Keep the selected Monthly Payroll Overview month and Payroll History in sync.
+function syncActiveDashboardMonthToHistory(){
+ const month=get('dashboardMonth')?.value||currentMonthKey();
+ if(!month)return;
+ const record=ensureDashboardMonth(month);
+ if(!record)return;
+ syncSelectedMonthBillAmounts(record);
+ recalcSavedRecord(record);
+ saveMonthlyHistoryData();
+ renderMonthlyHistory();
 }
 
 function scheduledStatsForRange(minDate,maxDate){
@@ -1612,14 +1624,20 @@ function renderMonthlyDashboard(){
   renderBillPicker(which==='first'?'15':'eom',record);
  }));
 }
+get('dashboardMonth')?.addEventListener('input',()=>{
+ const month=get('dashboardMonth').value;
+ if(month){
+  ensureDashboardMonth(month);
+  renderMonthlyDashboard();
+  syncActiveDashboardMonthToHistory();
+ }
+});
 get('dashboardMonth')?.addEventListener('change',()=>{
  const month=get('dashboardMonth').value;
  if(month){
-  const record=ensureDashboardMonth(month);
-  if(record)recalcSavedRecord(record);
-  saveMonthlyHistoryData();
+  ensureDashboardMonth(month);
   renderMonthlyDashboard();
-  renderMonthlyHistory();
+  syncActiveDashboardMonthToHistory();
  }
 });
 
