@@ -785,6 +785,35 @@ dialog{
  .finance-cell{min-height:49px!important;height:49px!important}
 }
 
+
+/* Compact monthly overview and accessible attendance choices */
+.approved-overview-heading{min-height:0!important;padding-top:6px!important;padding-bottom:6px!important;margin-bottom:6px!important}
+.approved-overview-heading .overview-title{gap:6px!important}
+.overview-calendar{font-size:19px!important}
+.overview-divider{height:30px!important}
+.approved-overview-heading .dashboard-month{gap:2px!important}
+.approved-overview-heading .dashboard-month input{min-height:30px!important;height:30px!important;font-size:11px!important}
+.attendance-choice{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;width:100%!important}
+.attendance-choice button{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ min-height:42px!important;width:100%!important;margin:0!important;
+ position:relative!important;z-index:2!important;pointer-events:auto!important;
+ border:1px solid var(--line)!important;border-radius:10px!important;
+ background:#fff!important;color:var(--ink)!important;
+ font-size:12px!important;font-weight:700!important;cursor:pointer!important;
+ touch-action:manipulation!important;
+}
+.attendance-choice button[aria-pressed="true"]{
+ background:#e7f3ec!important;border-color:#76a88b!important;color:#205c40!important;
+ box-shadow:inset 0 0 0 1px #76a88b!important;
+}
+.attendance-choice button[data-work-no][aria-pressed="true"]{
+ background:#fff0f0!important;border-color:#d98d8d!important;color:#a52b2b!important;
+}
+.attendance-dialog .field{position:relative!important;z-index:1!important}
+.attendance-dialog [data-dialog-save]{min-height:40px!important;min-width:100px!important}
+.attendance-day.absent{background:#ffe5e5!important;border:1px solid #d77d7d!important;color:#a52b2b!important;box-shadow:inset 0 0 0 1px #efc1c1!important}
+
 </style>
 </head>
 <body>
@@ -1066,15 +1095,21 @@ function detailMarkup(record,which){
  </div><div class="holiday-info" data-record-holiday-info hidden></div>
  <dialog class="attendance-dialog" data-day-dialog="${key}">
   <div class="picker-head"><div><h3 data-dialog-date>Attendance</h3><p class="sub">Did you report to work on this date?</p></div><button type="button" data-dialog-close aria-label="Close">✕</button></div>
-  <div class="field"><label>Did you work?</label><div class="btnrow"><button type="button" data-work-yes>Yes, I worked</button><button type="button" data-work-no>No, absent</button></div></div>
+  <div class="field"><label>Did you work?</label><div class="attendance-choice"><button type="button" data-work-yes aria-pressed="true">Yes, I worked</button><button type="button" data-work-no aria-pressed="false">No, absent</button></div></div>
   <div data-dialog-ot hidden>
    <div class="field"><div class="fieldhead"><label>Overtime hours</label><span class="val" data-dialog-ot-label>0 hours</span></div><input type="range" min="0" max="5" step="0.5" value="0" data-dialog-ot-slider></div>
    <p class="sub" data-dialog-nd-preview>Night differential: 0 hours (automatic based on duty schedule)</p>
   </div>
   <div class="btnrow"><button type="button" class="primary" data-dialog-save>OK</button></div>
  </dialog>
- <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary><button type="button" class="computation-link" data-open-computation="${which}"><span>OT pay + night differential</span><b>${fmt(x.otPay||0)} <span class="info-mark">i</span></b></button><button type="button" class="computation-link" data-open-deductions="${which}"><span>Payroll deductions (SSS · PhilHealth · Pag-IBIG · Tax)</span><b>View formula <span class="info-mark">i</span></b></button><div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div><div class="lineitem"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)}</b></div><div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div><div class="lineitem"><span>Money left / shortfall</span><b class="${(x.balance||0)<0?'negative':'positive'}">${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details>
+ <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary>
+ <button type="button" class="computation-link" data-open-computation="${which}"><span>OT pay · Night differential · Weekend</span><b>${fmt(x.otPay||0)} <span class="info-mark">i</span></b></button>
+ <button type="button" class="computation-link" data-open-cutoff-summary="${which}"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)} <span class="info-mark">i</span></b></button>
+ <div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div>
+ <div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div>
+ <div class="lineitem"><span>Money left / shortfall</span><b class="${(x.balance||0)<0?'negative':'positive'}">${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details>
  <dialog class="pay-breakdown-dialog" data-pay-breakdown="${which}"><div class="picker-head"><div><h3>OT Pay Computation</h3><p class="sub">${which==='first'?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div><div class="breakdown-content" data-breakdown-content="${which}"></div></dialog>
+ <dialog class="pay-breakdown-dialog" data-cutoff-summary="${which}"><div class="picker-head"><div><h3>Estimated Cutoff Take-home</h3><p class="sub">${which==='first'?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div><div class="breakdown-content" data-cutoff-summary-content="${which}"></div></dialog>
  <dialog class="pay-breakdown-dialog" data-deduction-dialog="${which}"><div class="picker-head"><div><h3>Payroll Deduction Computation</h3><p class="sub">${which==='first'?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div><div class="breakdown-content" data-deduction-content="${which}"></div></dialog></div>`;
 }
 function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h,e.date),shiftNight=Number(e.shiftNight??scheduledNightHours(e.date));e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*24)/24;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
@@ -1149,6 +1184,45 @@ function syncSelectedMonthBillAmounts(record){
 }
 
 
+
+function buildOtPayBreakdown(record,which){
+ const x=record[which],hourly=basicPay()/(22*8),entries=x.otEntries||[];
+ let weekdayOt=0,weekendOt=0,nightDiff=0,weekdayHours=0,weekendHours=0,nightHours=0;
+ const details=entries.map(e=>{
+  const hours=Number(e.hours)||0,date=e.date||'',d=date?new Date(date+'T12:00:00'):null,isWeekend=d&&(d.getDay()===0||d.getDay()===6);
+  const night=Number(e.night??nightHoursForOt(hours,date)),shiftNight=Number(e.shiftNight??scheduledNightHours(date));
+  const otAmount=hours*hourly*1.25,ndAmount=(night+shiftNight)*hourly*.10;
+  if(isWeekend){weekendOt+=otAmount;weekendHours+=hours;}else{weekdayOt+=otAmount;weekdayHours+=hours;}
+  nightDiff+=ndAmount;nightHours+=night+shiftNight;
+  return {date,hours,isWeekend,otAmount,ndAmount,night,shiftNight};
+ });
+ return `<div class="breakdown-formula">OT rate: hourly basic rate × 1.25. Night differential: eligible night hours × hourly basic rate × 10%. Weekend OT is shown separately for visibility and is already included in the OT total, not added twice.</div>
+ <div class="breakdown-row"><div><b>Weekday OT</b><small>${weekdayHours.toFixed(1)} hours × ${fmt(hourly)} × 1.25</small></div><strong>${fmt(weekdayOt)}</strong></div>
+ <div class="breakdown-row"><div><b>Weekend OT</b><small>${weekendHours.toFixed(1)} hours × ${fmt(hourly)} × 1.25 · Saturday/Sunday</small></div><strong>${fmt(weekendOt)}</strong></div>
+ <div class="breakdown-row"><div><b>Night differential</b><small>${nightHours.toFixed(1)} eligible hours × ${fmt(hourly)} × 10%</small></div><strong>${fmt(nightDiff)}</strong></div>
+ ${details.map(e=>`<div class="breakdown-row"><div><b>${e.date?new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'OT entry'} · ${e.isWeekend?'Weekend':'Weekday'}</b><small>${e.hours.toFixed(1)} OT hrs · ${e.night.toFixed(1)} night OT hrs + ${e.shiftNight.toFixed(1)} scheduled night hrs</small></div><strong>${fmt(e.otAmount+e.ndAmount)}</strong></div>`).join('')}
+ <div class="breakdown-total"><span>Total OT pay + night differential</span><b>${fmt(x.otPay||0)}</b></div>`;
+}
+function buildCutoffSummary(record,which){
+ const x=record[which],basic=basicPay(),halfBasic=basic/2,ot=Number(x.otPay)||0,holiday=Number(x.holiday)||0,absence=Number(x.absenceDeduction)||0;
+ const sss=Math.min(1750,basic*.05)/2,philhealth=basic*.025/2,pagibig=(basic>1500?200:basic*.02)/2;
+ const taxable=Math.max(0,halfBasic+ot+holiday-sss-philhealth-pagibig),tax=taxForAnnual(taxable*24)/24;
+ const gross=halfBasic+ot+holiday, deductions=sss+philhealth+pagibig+tax+absence,net=Number(x.paySuggested)||Math.max(0,gross-sss-philhealth-pagibig-tax-absence);
+ return `<div class="breakdown-formula">Tap a component to inspect its formula. Gross includes half-month basic salary, recorded OT and holiday premium. Net is after payroll deductions and absence deduction.</div>
+ <button type="button" class="computation-link" data-open-gross="${which}"><span>Gross pay</span><b>${fmt(gross)} <span class="info-mark">i</span></b></button>
+ <button type="button" class="computation-link" data-open-deductions="${which}"><span>Payroll deductions</span><b>− ${fmt(deductions)} <span class="info-mark">i</span></b></button>
+ <div class="breakdown-total"><span>Net estimated cutoff take-home</span><b>${fmt(net)}</b></div>
+ <div class="sub">Gross − payroll deductions = net estimated cutoff take-home.</div>
+ <div class="breakdown-row"><div><b>Absence deduction included</b><small>${x.absenceDays||0} absent day(s) × daily absence rate</small></div><strong>${fmt(absence)}</strong></div>`;
+}
+function buildGrossBreakdown(record,which){
+ const x=record[which],basic=basicPay(),half=basic/2,ot=Number(x.otPay)||0,holiday=Number(x.holiday)||0;
+ return `<div class="breakdown-formula">Gross pay before statutory contributions, withholding tax, and absence deduction.</div>
+ <div class="breakdown-row"><div><b>Half-month basic salary</b><small>Monthly basic salary ÷ 2</small></div><strong>${fmt(half)}</strong></div>
+ <div class="breakdown-row"><div><b>OT + night differential</b><small>From recorded weekday/weekend OT and eligible night hours</small></div><strong>${fmt(ot)}</strong></div>
+ <div class="breakdown-row"><div><b>Holiday premium</b><small>Applicable holiday pay for this cutoff</small></div><strong>${fmt(holiday)}</strong></div>
+ <div class="breakdown-total"><span>Gross pay</span><b>${fmt(half+ot+holiday)}</b></div>`;
+}
 function buildPayrollDeductionsBreakdown(record,which){
  const x=record[which],basic=basicPay(),sss=Math.min(1750,basic*.05)/2,philhealth=basic*.025/2,pagibig=(basic>1500?200:basic*.02)/2;
  const halfBasic=basic/2,ot=Number(x.otPay)||0,holiday=Number(x.holiday)||0;
@@ -1196,15 +1270,26 @@ function buildCutoffPayBreakdown(record,which){
 function bindDashboardDetailEvents(root){
  root.querySelectorAll('[data-open-computation]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.openComputation,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
-  const dialog=root.querySelector(`[data-pay-breakdown="${which}"]`)||root.querySelector(`[data-dashboard-pay-breakdown="${which}"]`);
-  const content=dialog?.querySelector('.breakdown-content');
-  if(record&&dialog&&content){content.innerHTML=buildCutoffPayBreakdown(record,which);dialog.showModal();}
+  const dialog=root.querySelector(`[data-pay-breakdown="${which}"]`),content=dialog?.querySelector('.breakdown-content');
+  if(record&&dialog&&content){content.innerHTML=buildOtPayBreakdown(record,which);dialog.showModal();}
  }));
- root.querySelectorAll('[data-open-deductions]').forEach(btn=>btn.addEventListener('click',()=>{
-  const which=btn.dataset.openDeductions,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
-  const x=record?.[which],dialog=root.querySelector(`[data-deduction-dialog="${which}"]`),content=root.querySelector(`[data-deduction-content="${which}"]`);
-  if(x&&dialog&&content){content.innerHTML=buildPayrollDeductionsBreakdown(record,which);dialog.showModal();}
+ root.querySelectorAll('[data-open-cutoff-summary]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.openCutoffSummary,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
+  const dialog=root.querySelector(`[data-cutoff-summary="${which}"]`),content=root.querySelector(`[data-cutoff-summary-content="${which}"]`);
+  if(record&&dialog&&content){
+   content.innerHTML=buildCutoffSummary(record,which);
+   content.querySelector('[data-open-gross]')?.addEventListener('click',()=>{
+    const sub=root.querySelector(`[data-deduction-dialog="${which}"]`);
+    if(sub){sub.querySelector('.picker-head h3').textContent='Gross Pay Computation';sub.querySelector('.breakdown-content').innerHTML=buildGrossBreakdown(record,which);sub.showModal();}
+   });
+   content.querySelector('[data-open-deductions]')?.addEventListener('click',()=>{
+    const sub=root.querySelector(`[data-deduction-dialog="${which}"]`);
+    if(sub){sub.querySelector('.picker-head h3').textContent='Payroll Deduction Computation';sub.querySelector('.breakdown-content').innerHTML=buildPayrollDeductionsBreakdown(record,which);sub.showModal();}
+   });
+   dialog.showModal();
+  }
  }));
+ // Nested Gross and Payroll Deduction actions are bound when the summary dialog is populated.
  root.querySelectorAll('[data-open-money-left]').forEach(btn=>btn.addEventListener('click',()=>{
   const which=btn.dataset.openMoneyLeft,card=btn.closest('.cutoff-dashboard-card'),dialog=root.querySelector(`[data-money-left-dialog="${which}"]`);
   if(dialog&&card){
@@ -1219,12 +1304,12 @@ function bindDashboardDetailEvents(root){
   const [month,which,date]=btn.dataset.dayPick.split('|'),dialog=root.querySelector(`[data-day-dialog="${month}|${which}"]`),record=monthlyHistory.find(x=>x.month===month),x=record?.[which];if(!dialog||!x)return;
   dialog.dataset.selectedDate=date;dialog.querySelector('[data-dialog-date]').textContent=new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const existing=(x.otEntries||[]).find(e=>e.date===date),absent=(x.absenceDates||[]).includes(date);
-  dialog.dataset.attendance=absent?'no':'yes';dialog.querySelector('[data-dialog-ot]').hidden=absent;
+  dialog.dataset.attendance=absent?'no':'yes';dialog.querySelector('[data-dialog-ot]').hidden=absent;dialog.querySelector('[data-work-yes]').setAttribute('aria-pressed',absent?'false':'true');dialog.querySelector('[data-work-no]').setAttribute('aria-pressed',absent?'true':'false');
   dialog.querySelector('[data-dialog-ot-slider]').value=existing?.hours||0;dialog.querySelector('[data-dialog-ot-label]').textContent=(existing?.hours||0)+' hours';updateNightPreview(dialog,Number(existing?.hours)||0);dialog.showModal();
  }));
  root.querySelectorAll('[data-holiday-detail]').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();const panel=btn.closest('.record-detail')?.querySelector('[data-record-holiday-info]');if(panel){const date=btn.dataset.holidayDetail;panel.innerHTML=holidayInfoMarkup(holidayForDate(date),date);panel.hidden=false;}}));
- root.querySelectorAll('[data-work-yes]').forEach(btn=>btn.addEventListener('click',()=>{const d=btn.closest('dialog');d.dataset.attendance='yes';d.querySelector('[data-dialog-ot]').hidden=false;}));
- root.querySelectorAll('[data-work-no]').forEach(btn=>btn.addEventListener('click',()=>{const d=btn.closest('dialog');d.dataset.attendance='no';d.querySelector('[data-dialog-ot]').hidden=true;}));
+ root.querySelectorAll('[data-work-yes]').forEach(btn=>btn.addEventListener('click',()=>{const d=btn.closest('dialog');d.dataset.attendance='yes';d.querySelector('[data-dialog-ot]').hidden=false;d.querySelector('[data-work-yes]').setAttribute('aria-pressed','true');d.querySelector('[data-work-no]').setAttribute('aria-pressed','false');}));
+ root.querySelectorAll('[data-work-no]').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const d=btn.closest('dialog');d.dataset.attendance='no';d.querySelector('[data-dialog-ot]').hidden=true;d.querySelector('[data-work-yes]').setAttribute('aria-pressed','false');btn.setAttribute('aria-pressed','true');}));
  root.querySelectorAll('[data-dialog-close]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('dialog').close()));
  root.querySelectorAll('[data-dialog-ot-slider]').forEach(el=>el.addEventListener('input',()=>{const d=el.closest('dialog');d.querySelector('[data-dialog-ot-label]').textContent=el.value+' hours';updateNightPreview(d,Number(el.value));}));
  root.querySelectorAll('[data-dialog-save]').forEach(btn=>btn.addEventListener('click',()=>{
