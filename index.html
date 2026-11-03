@@ -80,16 +80,16 @@ details[open]>summary .chevron{transform:rotate(180deg)}
 @media(max-width:520px){.tabbar .tabbtn{font-size:9px!important;padding:8px 3px!important}.content-main{padding-top:4px!important}.section-head{align-items:flex-start}}
 
 
-/* Work schedule: compact paired time controls */
-.work-schedule-section{padding:12px 0}
-.work-schedule-section .section-head{align-items:center;margin:0 0 4px}
-.schedule-tag{font-size:10px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--green);background:var(--greenbg);padding:4px 8px;border-radius:999px;white-space:nowrap}
-.schedule-time-grid{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:7px;margin-top:10px}
-.schedule-time-card{min-width:0;background:#f7f9f7;border:1px solid var(--line);border-radius:12px;padding:9px 11px}
-.schedule-time-card label{display:block;font-size:9px;letter-spacing:.09em;font-weight:750;color:var(--muted);margin:0 0 5px}
-.schedule-time-control input{width:100%;min-width:0;border:0!important;background:transparent!important;padding:0!important;margin:0!important;font-size:18px!important;font-weight:750!important;color:var(--ink)!important;line-height:1.3;font-variant-numeric:tabular-nums}
-.schedule-arrow{text-align:center;color:var(--muted);font-size:16px;font-weight:600}
-@media(max-width:420px){.schedule-time-grid{gap:5px}.schedule-time-card{padding:8px}.schedule-time-control input{font-size:16px!important}}
+/* Compact weekly schedule selector */
+.work-schedule-section{padding:9px 0}.work-schedule-section .section-head{align-items:center;margin:0 0 8px}
+.schedule-tag{font-size:9px;font-weight:700;letter-spacing:.03em;color:var(--green);background:var(--greenbg);padding:4px 7px;border-radius:999px;white-space:nowrap}
+.week-schedule-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.weekday-schedule-btn{min-width:0;padding:7px 2px 6px;border-radius:9px;background:#f7f9f7;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:3px}
+.weekday-schedule-btn b{font-size:10px;line-height:1.2}.weekday-schedule-btn small{font-size:8px;color:var(--muted);white-space:nowrap;line-height:1.2}
+.weekday-schedule-btn.is-working{background:#edf6f0;border-color:#cfe3d6}.weekday-schedule-btn.is-working small{color:var(--green);font-weight:700}.weekday-schedule-btn.is-rest{background:#f5f5f5;color:#77817b}
+.schedule-footnote{font-size:10px;color:var(--muted);margin:6px 0 0}
+.day-schedule-dialog{width:min(90vw,360px);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 20px 60px #0003}.day-schedule-dialog::backdrop{background:#0b1712a6}.day-schedule-dialog form{margin:0}.schedule-working-toggle{display:flex;align-items:center;gap:8px;padding:10px 0;font-size:13px;font-weight:650}.schedule-working-toggle input{accent-color:var(--green);width:17px;height:17px}.schedule-dialog-times{display:grid;grid-template-columns:1fr 1fr;gap:10px}.schedule-dialog-times .field{margin:8px 0}.schedule-dialog-times input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff;font:inherit;color:var(--ink)}.schedule-dialog-times.is-disabled{opacity:.4;pointer-events:none}
+@media(max-width:420px){.week-schedule-grid{gap:3px}.weekday-schedule-btn{padding:7px 0 6px}.weekday-schedule-btn b{font-size:9px}.weekday-schedule-btn small{font-size:7px}}
 </style>
 </head>
 <body>
@@ -125,19 +125,10 @@ details[open]>summary .chevron{transform:rotate(180deg)}
    <div class="field"><div class="fieldhead"><label for="basicSalary">Monthly basic salary</label><span class="val" id="basicSalaryVal">₱0</span></div><input id="basicSalary" type="number" min="0" max="1000000" step="500" value="0"></div>
 
    <div class="section work-schedule-section">
-      <div class="section-head"><h3>Work schedule</h3><span class="schedule-tag">Regular hours</span></div>
-      <p class="sub">Set your usual working hours. Night differential is calculated automatically for eligible hours.</p>
-      <div class="schedule-time-grid">
-        <div class="schedule-time-card">
-          <label for="dutyStart">STARTS AT</label>
-          <div class="schedule-time-control"><input id="dutyStart" type="time" value="09:00"></div>
-        </div>
-        <div class="schedule-arrow" aria-hidden="true">→</div>
-        <div class="schedule-time-card">
-          <label for="dutyEnd">ENDS AT</label>
-          <div class="schedule-time-control"><input id="dutyEnd" type="time" value="18:00"></div>
-        </div>
-      </div>
+      <div class="section-head"><h3>Weekly work schedule</h3><span class="schedule-tag">Tap a day to edit</span></div>
+      <div class="week-schedule-grid" id="weekScheduleGrid" aria-label="Weekly work schedule"></div>
+      <p class="schedule-footnote">Set different duty hours for each day, or mark a day as a rest day.</p>
+      <input id="dutyStart" type="hidden" value="09:00"><input id="dutyEnd" type="hidden" value="18:00">
     </div>
    <div class="section"><div class="section-head"><h3>Additional & regularization benefits</h3><button type="button" class="small-action" id="addBenefit">＋ Add</button></div><p class="sub">Add, edit or remove any company benefit, including regularization and other additional benefits. Benefits are listed separately; include them in payroll estimates only after confirming their tax and payroll treatment.</p><div id="customBenefits"></div></div>
    <p class="callout">Overtime and night differential are recorded by date inside each cutoff under Work & Pay Records.</p>
@@ -199,10 +190,9 @@ details[open]>summary .chevron{transform:rotate(180deg)}
    <h2>Holiday & Pay Settings</h2><p class="sub">Choose a month to review holidays, scheduled workdays and estimated pay scenarios. Verify official holiday proclamations and actual attendance.</p><div class="field"><label for="payCalendarMonth">Calendar month</label><input type="month" id="payCalendarMonth" value="2026-11"></div><div id="payCalendar" class="compgrid"></div><div id="payHolidayInfo" class="holiday-info" hidden></div><div class="estimate-grid"><div class="estimate-card"><span class="tag">Minimum · No OT</span><strong id="minimumPay">₱0</strong></div><div class="estimate-card"><span class="tag">Maximum · 3h OT × 3 days/week</span><strong id="maximumPay">₱0</strong></div></div>
    <h3>Automatic holiday integration</h3>
    <p class="sub">Set your normal workdays once. Holiday premiums are estimated automatically for each saved month when a holiday falls on a scheduled workday.</p>
-   <div class="field"><label>My normal working days</label><div class="weekday-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px;font-size:12px">
-    <label><input class="workday" type="checkbox" value="1" checked> Mon</label><label><input class="workday" type="checkbox" value="2" checked> Tue</label><label><input class="workday" type="checkbox" value="3" checked> Wed</label><label><input class="workday" type="checkbox" value="4" checked> Thu</label><label><input class="workday" type="checkbox" value="5" checked> Fri</label><label><input class="workday" type="checkbox" value="6"> Sat</label><label><input class="workday" type="checkbox" value="0"> Sun</label>
-   </div></div>
-   <div class="compgrid"><div class="field"><label for="holidayHoursPerDay">Regular hours per scheduled day</label><input id="holidayHoursPerDay" type="number" min="1" max="12" step="0.5" value="8"></div><div class="field"><label for="holidayNightPerDay">Night differential hours per holiday</label><input id="holidayNightPerDay" type="number" min="0" max="8" step="0.5" value="0"></div></div>
+   <p class="sub">Holiday calculations use the weekly schedule set in the Salary & Benefits section above.</p>
+   <div id="legacyWorkdayFlags" hidden><input class="workday" type="checkbox" value="1" checked><input class="workday" type="checkbox" value="2" checked><input class="workday" type="checkbox" value="3" checked><input class="workday" type="checkbox" value="4" checked><input class="workday" type="checkbox" value="5" checked><input class="workday" type="checkbox" value="6"><input class="workday" type="checkbox" value="0"></div>
+   <input id="holidayHoursPerDay" type="hidden" value="8"><input id="holidayNightPerDay" type="hidden" value="0">
    <label class="switchrow"><input id="assumeHolidayWorked" type="checkbox" checked> Assume I work when a holiday falls on my scheduled workday</label>
    <div class="highlight"><small>Holiday premiums</small><strong>Automatic per month</strong><small>Included in the corresponding 15th or month-end cutoff calculation.</small></div>
    <div class="formula"><b>Multipliers used</b>Regular holiday: 200% for first 8 hours; 260% for overtime beyond 8 hours. Regular holiday on rest day: 260% first 8 hours; 338% for overtime. Special non-working day: 130% first 8 hours; 169% for overtime. Special non-working day on rest day: 150% first 8 hours; 195% for overtime. Night differential adds 10% of the applicable hourly rate for hours from 10 PM to 6 AM. Special working days have no statutory holiday premium. For monthly-paid employees, this calculator adds the premium portion on top of the ordinary monthly salary, not the ordinary day's base pay again.</div>
@@ -212,6 +202,17 @@ details[open]>summary .chevron{transform:rotate(180deg)}
  </section>
  <p class="foot">Planning tool only, not an official payslip. Estimates use your editable basic salary, simplified Philippine statutory deductions, 10% night differential for eligible hours, and 1.25× hourly rate for OT. User-added benefits are tracked separately. Tax and payroll treatment can vary by employer. Saved settings stay on this browser/device.</p>
 </main>
+<dialog id="dayScheduleDialog" class="day-schedule-dialog">
+ <form method="dialog" id="dayScheduleForm">
+  <div class="picker-head"><div><h2 id="dayScheduleTitle">Monday schedule</h2><p class="sub">Set the duty hours for this day.</p></div><button type="button" id="closeDaySchedule" aria-label="Close">✕</button></div>
+  <label class="schedule-working-toggle"><input type="checkbox" id="dayIsWorking" checked> Working day</label>
+  <div class="schedule-dialog-times" id="scheduleDialogTimes">
+   <div class="field"><label for="dayDutyStart">Starts at</label><input type="time" id="dayDutyStart" value="09:00"></div>
+   <div class="field"><label for="dayDutyEnd">Ends at</label><input type="time" id="dayDutyEnd" value="18:00"></div>
+  </div>
+  <div class="btnrow"><button type="button" id="cancelDaySchedule">Cancel</button><button type="button" class="primary" id="saveDaySchedule">Save schedule</button></div>
+ </form>
+</dialog>
 <script>
 const fmt=n=>'₱'+Math.round(n).toLocaleString('en-PH');
 const basicPay=()=>Math.max(0,Number(document.getElementById('basicSalary')?.value)||0);
@@ -233,6 +234,18 @@ function renderExpenseRows(){expenseRoot.innerHTML=expenseDefs.map(([id,label,de
 renderExpenseRows();
 const ids=['employmentStatus','basicSalary','workPosition','dutyStart','dutyEnd',...expenseDefs.map(x=>x[0])];
 const get=id=>document.getElementById(id);
+const WEEK_DAYS=[{n:'Monday',s:'Mon',v:1},{n:'Tuesday',s:'Tue',v:2},{n:'Wednesday',s:'Wed',v:3},{n:'Thursday',s:'Thu',v:4},{n:'Friday',s:'Fri',v:5},{n:'Saturday',s:'Sat',v:6},{n:'Sunday',s:'Sun',v:0}];
+let weeklySchedule={1:{working:true,start:'09:00',end:'18:00'},2:{working:true,start:'09:00',end:'18:00'},3:{working:true,start:'09:00',end:'18:00'},4:{working:true,start:'09:00',end:'18:00'},5:{working:true,start:'09:00',end:'18:00'},6:{working:false,start:'09:00',end:'18:00'},0:{working:false,start:'09:00',end:'18:00'}};
+let editingScheduleDay=null;
+function scheduleForDay(day){return weeklySchedule[Number(day)]||{working:false,start:'09:00',end:'18:00'};}
+function compactTime(value){const [hh,mm]=String(value||'09:00').split(':').map(Number),h=hh%12||12;return h+(mm?':'+String(mm).padStart(2,'0'):'')+(hh>=12?'p':'a');}
+function scheduleForDate(date){return scheduleForDay(new Date(date+'T00:00:00').getDay());}
+function syncLegacyWorkdays(){document.querySelectorAll('.workday').forEach(el=>el.checked=!!scheduleForDay(el.value).working);}
+function renderWeeklySchedule(){const root=get('weekScheduleGrid');if(!root)return;root.innerHTML=WEEK_DAYS.map(d=>{const x=scheduleForDay(d.v),label=x.working?`${compactTime(x.start)}–${compactTime(x.end)}`:'Rest';return `<button type="button" class="weekday-schedule-btn ${x.working?'is-working':'is-rest'}" data-schedule-day="${d.v}"><b>${d.s}</b><small>${label}</small></button>`}).join('');root.querySelectorAll('[data-schedule-day]').forEach(btn=>btn.addEventListener('click',()=>openDaySchedule(Number(btn.dataset.scheduleDay))));syncLegacyWorkdays();}
+function openDaySchedule(day){editingScheduleDay=day;const x=scheduleForDay(day),d=WEEK_DAYS.find(z=>z.v===day);get('dayScheduleTitle').textContent=d.n+' schedule';get('dayIsWorking').checked=!!x.working;get('dayDutyStart').value=x.start||'09:00';get('dayDutyEnd').value=x.end||'18:00';get('scheduleDialogTimes').classList.toggle('is-disabled',!x.working);get('dayScheduleDialog').showModal();}
+get('dayIsWorking').addEventListener('change',()=>get('scheduleDialogTimes').classList.toggle('is-disabled',!get('dayIsWorking').checked));
+get('closeDaySchedule').addEventListener('click',()=>get('dayScheduleDialog').close());get('cancelDaySchedule').addEventListener('click',()=>get('dayScheduleDialog').close());
+get('saveDaySchedule').addEventListener('click',()=>{if(editingScheduleDay===null)return;weeklySchedule[editingScheduleDay]={working:get('dayIsWorking').checked,start:get('dayDutyStart').value||'09:00',end:get('dayDutyEnd').value||'18:00'};get('dayScheduleDialog').close();renderWeeklySchedule();get('dutyStart').value=weeklySchedule[1].start;get('dutyEnd').value=weeklySchedule[1].end;rebuildAutoHolidayEntries();calculate();refreshSavedMonthEstimates();renderPayCalendar();try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));}catch(e){} });
 function taxForAnnual(annual){
  if(annual<=250000)return 0;
  if(annual<=400000)return (annual-250000)*.15;
@@ -285,7 +298,7 @@ function calculate(){
  const note=get('statusNote');if(note)note.textContent=isRegular?'Regular selected: estimated ₱2,000 monthly transport benefit included. Confirm eligibility with HR.':'';
  const hero=get('heroLeft');if(hero){hero.classList.toggle('positive',left>=0);hero.classList.toggle('negative',left<0);}
  if(window.__plannerAutoSaveTimer)clearTimeout(window.__plannerAutoSaveTimer);
- window.__plannerAutoSaveTimer=setTimeout(()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));const status=get('saveStatus');if(status)status.textContent='Automatically saved on this device and syncing to your account…';}catch(e){console.warn('Planner autosave failed',e);}},350);
+ window.__plannerAutoSaveTimer=setTimeout(()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));const status=get('saveStatus');if(status)status.textContent='Automatically saved on this device.';}catch(e){console.warn('Planner autosave failed',e);}},350);
  return {net,expenses,left,gross,deductions,otPay:0,nightPay:0,holiday};
 }
 // Interactive bill assignment: each expense belongs to exactly one payday.
@@ -328,16 +341,16 @@ function nightOverlap(start,end){
  let total=0;for(let t=start;t<end;t++){const minute=((t%1440)+1440)%1440;if(minute>=22*60||minute<6*60)total++;}
  return total/60;
 }
-function scheduledNightHours(){
- let start=timeMinutes(get('dutyStart')?.value,'13:00'),end=timeMinutes(get('dutyEnd')?.value,'22:00');if(end<=start)end+=1440;
+function scheduledNightHours(date){
+ const x=date?scheduleForDate(date):scheduleForDay(1);if(!x.working)return 0;let start=timeMinutes(x.start,'09:00'),end=timeMinutes(x.end,'18:00');if(end<=start)end+=1440;
  return Math.round(nightOverlap(start,end)*2)/2;
 }
-function nightHoursForOt(hours){
- const end=timeMinutes(get('dutyEnd')?.value,'22:00'),duration=Math.max(0,Number(hours)||0)*60;
- return Math.round(nightOverlap(end,end+duration)*2)/2;
+function nightHoursForOt(hours,date){
+ const x=date?scheduleForDate(date):scheduleForDay(1),end=timeMinutes(x.end,'18:00'),duration=Math.max(0,Number(hours)||0)*60;let finish=end;if(timeMinutes(x.end,'18:00')<=timeMinutes(x.start,'09:00'))finish+=1440;
+ return Math.round(nightOverlap(finish,finish+duration)*2)/2;
 }
 function updateNightPreview(dialog,hours){
- const n=nightHoursForOt(hours),el=dialog.querySelector('[data-dialog-nd-preview]');if(el)el.textContent='Night differential: '+n+' hours (automatic based on duty schedule)';
+ const date=dialog.dataset.selectedDate;const n=nightHoursForOt(hours,date),el=dialog.querySelector('[data-dialog-nd-preview]');if(el)el.textContent='Night differential: '+n+' hours (automatic based on duty schedule)';
 }
 function detailMarkup(record,which){
  const x=record[which],items=x.items||[],ot=x.otEntries||[],abs=x.absenceDates||[],period=cutoffPeriod(record.month,which),key=record.month+'|'+which;
@@ -345,7 +358,7 @@ function detailMarkup(record,which){
  <div class="calendar-legend"><span><i class="legend-dot calendar-workday"></i> Workday</span><span><i class="legend-dot calendar-rest"></i> Rest day</span><span><i class="legend-dot calendar-regular"></i> Regular holiday</span><span><i class="legend-dot calendar-special"></i> Special holiday</span></div>
  <div class="attendance-calendar" data-attendance-calendar="${key}" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
  ${['S','M','T','W','T','F','S'].map(d=>`<b style="font-size:10px;text-align:center">${d}</b>`).join('')}
- ${(()=>{let out='';const [yy,mo,dd]=period.min.split('-').map(Number),[ey,em,ed]=period.max.split('-').map(Number);const first=new Date(yy,mo-1,dd).getDay();for(let i=0;i<first;i++)out+='<span></span>';for(let dt=new Date(yy,mo-1,dd);dt<=new Date(ey,em-1,ed);dt.setDate(dt.getDate()+1)){const date=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');const isAbsent=abs.includes(date),entry=ot.find(e=>e.date===date),holiday=holidayForDate(date),dow=dt.getDay(),isWork=[...document.querySelectorAll('.workday:checked')].some(w=>Number(w.value)===dow),shade=holiday?(holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special'):isWork?'calendar-workday':'calendar-rest';out+=`<button type="button" class="attendance-day ${shade} ${isAbsent?'absent':entry?'worked':''}" data-day-pick="${key}|${date}" ${holiday?`data-holiday-detail="${date}"`:''}><b>${dt.getDate()}</b><small>${holiday?(holiday[2].includes('Regular')?'Regular holiday':'Special holiday'):isAbsent?'Absent':entry?entry.hours+'h OT':isWork?'Workday':'Rest day'}</small></button>`;}return out;})()}
+ ${(()=>{let out='';const [yy,mo,dd]=period.min.split('-').map(Number),[ey,em,ed]=period.max.split('-').map(Number);const first=new Date(yy,mo-1,dd).getDay();for(let i=0;i<first;i++)out+='<span></span>';for(let dt=new Date(yy,mo-1,dd);dt<=new Date(ey,em-1,ed);dt.setDate(dt.getDate()+1)){const date=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');const isAbsent=abs.includes(date),entry=ot.find(e=>e.date===date),holiday=holidayForDate(date),dow=dt.getDay(),isWork=scheduleForDate(date).working,shade=holiday?(holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special'):isWork?'calendar-workday':'calendar-rest';out+=`<button type="button" class="attendance-day ${shade} ${isAbsent?'absent':entry?'worked':''}" data-day-pick="${key}|${date}" ${holiday?`data-holiday-detail="${date}"`:''}><b>${dt.getDate()}</b><small>${holiday?(holiday[2].includes('Regular')?'Regular holiday':'Special holiday'):isAbsent?'Absent':entry?entry.hours+'h OT':isWork?'Workday':'Rest day'}</small></button>`;}return out;})()}
  </div><div class="holiday-info" data-record-holiday-info hidden></div>
  <dialog class="attendance-dialog" data-day-dialog="${key}">
   <div class="picker-head"><div><h3 data-dialog-date>Attendance</h3><p class="sub">Did you report to work on this date?</p></div><button type="button" data-dialog-close aria-label="Close">✕</button></div>
@@ -358,7 +371,7 @@ function detailMarkup(record,which){
  </dialog>
  <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary><div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div><div class="lineitem"><span>OT pay + applicable allowances</span><b>${fmt(x.otPay||0)}</b></div><div class="lineitem"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)}</b></div><div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div><div class="lineitem"><span>Money left / shortfall</span><b>${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details></div>`;
 }
-function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h),shiftNight=Number(e.shiftNight??scheduledNightHours());e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*12)/12;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
+function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h,e.date),shiftNight=Number(e.shiftNight??scheduledNightHours(e.date));e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*12)/12;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
 
 function renderMonthlyHistory(){
  const root=get('monthlyHistoryTable');if(!root)return;
@@ -391,7 +404,7 @@ function renderMonthlyHistory(){
  root.querySelectorAll('[data-dialog-save]').forEach(btn=>btn.addEventListener('click',()=>{
   const d=btn.closest('dialog'),date=d.dataset.selectedDate,att=d.dataset.attendance, [month,which]=d.dataset.dayDialog.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r||!date)return;
   const x=r[which];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.otEntries=x.otEntries.filter(e=>e.date!==date);x.absenceDates=x.absenceDates.filter(v=>v!==date);
-  if(att==='no')x.absenceDates.push(date);else{const hours=Number(d.querySelector('[data-dialog-ot-slider]').value)||0;const night=nightHoursForOt(hours);x.otEntries.push({date,hours,night,shiftNight:scheduledNightHours()});}
+  if(att==='no')x.absenceDates.push(date);else{const hours=Number(d.querySelector('[data-dialog-ot-slider]').value)||0;const night=nightHoursForOt(hours,date);x.otEntries.push({date,hours,night,shiftNight:scheduledNightHours(date)});}
   d.close();recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();
  }));
  root.querySelectorAll('[data-remove-ot]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeOt.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].otEntries.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();}));
@@ -417,10 +430,8 @@ function holidayPremiumForEntry(entry){
  return {premium:premium+nightDiff,type,firstRate,otRate,first,ot,nightDiff};
 }
 function holidayEntriesForMonth(month){
- const selected=[...document.querySelectorAll('.workday:checked')].map(x=>Number(x.value));
- const hours=Math.max(1,Math.min(12,Number(get('holidayHoursPerDay')?.value)||8)),night=Math.max(0,Math.min(hours,Number(get('holidayNightPerDay')?.value)||0));
  if(!get('assumeHolidayWorked')?.checked)return [];
- return Object.values(holidayData).flat().filter(([date,name,type])=>date&&date.startsWith(month)&&['Regular holiday','Special non-working day','Additional special non-working day'].includes(type)&&selected.includes(new Date(date+'T00:00:00').getDay())).map(([date,name])=>({date,name,hours,night,rest:false,auto:true}));
+ return Object.values(holidayData).flat().filter(([date,name,type])=>date&&date.startsWith(month)&&['Regular holiday','Special non-working day','Additional special non-working day'].includes(type)&&scheduleForDate(date).working).map(([date,name])=>{const x=scheduleForDate(date);let start=timeMinutes(x.start,'09:00'),end=timeMinutes(x.end,'18:00');if(end<=start)end+=1440;const hours=Math.max(1,Math.min(12,(end-start)/60));const night=Math.min(hours,scheduledNightHours(date));return {date,name,hours,night,rest:false,auto:true};});
 }
 function holidayPayByCutoff(month){
  month=month||new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);
@@ -441,7 +452,7 @@ function renderPayCalendar(){
  const hols=Object.values(holidayData).flat().filter(h=>h[0]&&h[0].startsWith(m)),byDay={};hols.forEach(h=>byDay[Number(h[0].slice(8,10))]=h);
  let cells='';for(let i=0;i<first.getDay();i++)cells+='<div></div>';
  for(let d=1;d<=days;d++){
-  const date=m+'-'+String(d).padStart(2,'0'),holiday=byDay[d],dow=new Date(yy,mm-1,d).getDay(),work=[...document.querySelectorAll('.workday:checked')].some(x=>Number(x.value)===dow);
+  const date=m+'-'+String(d).padStart(2,'0'),holiday=byDay[d],dow=new Date(yy,mm-1,d).getDay(),work=scheduleForDate(date).working;
   let cls='calendar-workday',label='Workday';
   if(holiday){cls=holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special';label=holiday[2].includes('Regular')?'Regular holiday':'Special holiday';}
   else if(!work){cls='calendar-rest';label='Rest day';}
@@ -456,13 +467,13 @@ function renderPayCalendar(){
 get('payCalendarMonth')?.addEventListener('change',renderPayCalendar);
 try{monthlyHistory=JSON.parse(localStorage.getItem('salaryMonthlyHistory')||'[]')||[];}catch(e){monthlyHistory=[];}
 // Existing history is loaded here; rolling months are seeded after saved planner settings are restored.
-function state(){let s={};ids.forEach(id=>s[id]=get(id).type==='checkbox'?get(id).checked:get(id).value);expenseDefs.forEach(([id])=>s[id+'Cutoff']=get(id+'Cutoff').value);s.workdays=[...document.querySelectorAll('.workday')].map(x=>({day:x.value,checked:x.checked}));s.holidayHoursPerDay=get('holidayHoursPerDay').value;s.holidayNightPerDay=get('holidayNightPerDay').value;s.assumeHolidayWorked=get('assumeHolidayWorked').checked;return s}
-function applyState(s){ids.forEach(id=>{if(s[id]!==undefined){if(get(id).type==='checkbox')get(id).checked=!!s[id];else get(id).value=s[id]}});expenseDefs.forEach(([id])=>{if(s[id+'Cutoff'])get(id+'Cutoff').value=s[id+'Cutoff']});if(s.baseHoursWeek&&get('baseHoursWeek'))get('baseHoursWeek').value=s.baseHoursWeek;if(Array.isArray(s.workdays))s.workdays.forEach(w=>{const el=document.querySelector('.workday[value=\"'+w.day+'\"]');if(el)el.checked=!!w.checked});if(s.holidayHoursPerDay)get('holidayHoursPerDay').value=s.holidayHoursPerDay;if(s.holidayNightPerDay)get('holidayNightPerDay').value=s.holidayNightPerDay;if(s.assumeHolidayWorked!==undefined)get('assumeHolidayWorked').checked=!!s.assumeHolidayWorked;rebuildAutoHolidayEntries();calculate()}
+function state(){let s={};ids.forEach(id=>s[id]=get(id).type==='checkbox'?get(id).checked:get(id).value);expenseDefs.forEach(([id])=>s[id+'Cutoff']=get(id+'Cutoff').value);s.weeklySchedule=weeklySchedule;s.workdays=[...document.querySelectorAll('.workday')].map(x=>({day:x.value,checked:x.checked}));s.holidayHoursPerDay=get('holidayHoursPerDay').value;s.holidayNightPerDay=get('holidayNightPerDay').value;s.assumeHolidayWorked=get('assumeHolidayWorked').checked;return s}
+function applyState(s){if(s.weeklySchedule&&typeof s.weeklySchedule==='object'){weeklySchedule={...weeklySchedule,...s.weeklySchedule};}else if(Array.isArray(s.workdays)){s.workdays.forEach(w=>{const old=weeklySchedule[Number(w.day)]||{};weeklySchedule[Number(w.day)]={...old,working:!!w.checked};});}ids.forEach(id=>{if(s[id]!==undefined){if(get(id).type==='checkbox')get(id).checked=!!s[id];else get(id).value=s[id]}});expenseDefs.forEach(([id])=>{if(s[id+'Cutoff'])get(id+'Cutoff').value=s[id+'Cutoff']});if(s.baseHoursWeek&&get('baseHoursWeek'))get('baseHoursWeek').value=s.baseHoursWeek;if(Array.isArray(s.workdays))s.workdays.forEach(w=>{const el=document.querySelector('.workday[value=\"'+w.day+'\"]');if(el)el.checked=!!w.checked});if(s.holidayHoursPerDay)get('holidayHoursPerDay').value=s.holidayHoursPerDay;if(s.holidayNightPerDay)get('holidayNightPerDay').value=s.holidayNightPerDay;if(s.assumeHolidayWorked!==undefined)get('assumeHolidayWorked').checked=!!s.assumeHolidayWorked;syncLegacyWorkdays();renderWeeklySchedule();get('dutyStart').value=weeklySchedule[1].start;get('dutyEnd').value=weeklySchedule[1].end;rebuildAutoHolidayEntries();calculate()}
 ids.forEach(id=>{get(id).addEventListener('input',calculate);get(id).addEventListener('change',calculate)});get('basicSalary').addEventListener('input',()=>{calculate();refreshSavedMonthEstimates();renderPayCalendar()});get('workPosition').addEventListener('input',()=>{calculate();});expenseDefs.forEach(([id])=>get(id+'Cutoff').addEventListener('change',calculate));
 get('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));get('saveStatus').textContent='Saved on this device. Your data stays in this browser and is not uploaded to a cloud account.'}catch(e){get('saveStatus').textContent='Could not save on this browser. Please keep a note of your settings.'}});
 get('resetBtn').addEventListener('click',()=>{const s={employmentStatus:'probationary',ot:0,night:0,otdays:0,savings:0,investment:5000,jowa:3000,house:5000,mama:10000,utilities:1500,food:6000,transport:1500,wifi:1000,personal:2000,other:1000};expenseDefs.forEach(([id])=>s[id+'Cutoff']='eom');applyState(s);get('saveStatus').textContent='Baseline restored. Press Save to keep these settings.'});
 
-try{const saved=localStorage.getItem('salaryBudgetPlanner');if(saved){applyState(JSON.parse(saved));}else {rebuildAutoHolidayEntries();calculate()}}catch(e){rebuildAutoHolidayEntries();calculate()}
+try{const saved=localStorage.getItem('salaryBudgetPlanner');if(saved){applyState(JSON.parse(saved));}else {renderWeeklySchedule();rebuildAutoHolidayEntries();calculate()}}catch(e){renderWeeklySchedule();rebuildAutoHolidayEntries();calculate()}
 
 refreshSavedMonthEstimates();
 renderPayCalendar();
