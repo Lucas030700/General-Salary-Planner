@@ -626,6 +626,136 @@ dialog{
  .finance-cell b{font-size:11px!important}
 }
 
+
+/* Approved overview header, compact sticky navigation and paycheck interactions */
+.sticky-shell{
+ position:sticky!important;top:0!important;z-index:1200!important;
+ padding-top:env(safe-area-inset-top,0px)!important;
+ background:var(--bg)!important;
+ box-shadow:0 3px 12px #152d2012!important;
+}
+.sticky-shell header{
+ padding:12px 14px 10px!important;
+ border-radius:0 0 16px 16px!important;
+}
+.sticky-shell .eyebrow{font-size:9px!important;line-height:1.2!important}
+.sticky-shell h1{font-size:20px!important;line-height:1.12!important;margin:4px 0 2px!important}
+.sticky-shell header p{font-size:11px!important;line-height:1.2!important}
+.sticky-shell .pill{font-size:9px!important;padding:5px 7px!important}
+.sticky-shell .tabbar{
+ width:calc(100% - 20px)!important;
+ gap:5px!important;margin:0 auto!important;padding:5px 0 6px!important;
+}
+.sticky-shell .tabbar .tabbtn{
+ min-height:37px!important;padding:6px 4px!important;
+ font-size:10px!important;line-height:1.12!important;border-radius:9px!important;
+}
+.content-main{padding-top:8px!important}
+.approved-overview-heading{
+ display:grid!important;
+ grid-template-columns:minmax(0,1.12fr) 1px minmax(132px,.88fr)!important;
+ align-items:center!important;gap:10px!important;
+ padding:9px 10px!important;margin:0 0 9px!important;
+ border:1px solid var(--line)!important;border-radius:13px!important;
+ background:#fff!important;
+}
+.approved-overview-heading .overview-title{
+ display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;
+}
+.overview-calendar{font-size:24px!important;line-height:1!important;color:var(--green)!important;flex:0 0 auto}
+.approved-overview-heading h2{
+ min-width:0!important;font-size:clamp(13px,3.7vw,17px)!important;
+ line-height:1.15!important;margin:0!important;letter-spacing:-.025em!important;
+}
+.overview-divider{height:44px;background:var(--line);width:1px}
+.approved-overview-heading .dashboard-month{
+ display:flex!important;flex-direction:column!important;
+ width:100%!important;max-width:none!important;min-width:0!important;gap:3px!important;
+}
+.approved-overview-heading .dashboard-month label{
+ font-size:9px!important;font-weight:750!important;margin:0!important;
+}
+.approved-overview-heading .dashboard-month input{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ min-height:38px!important;padding:6px 7px!important;
+ font-size:13px!important;border-radius:9px!important;
+}
+.cutoff-dashboard-card{overflow:hidden!important}
+.finance-cell{
+ min-height:65px!important;padding:6px 4px!important;
+ align-items:center!important;justify-content:center!important;text-align:center!important;
+}
+.finance-cell small{
+ min-height:2.2em!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;text-align:center!important;width:100%!important;
+}
+.finance-cell b{width:100%!important;text-align:center!important}
+.finance-cell.takehome,.finance-cell.remaining,.finance-cell.bills-cell{
+ cursor:pointer!important;font:inherit!important;
+}
+.finance-cell.takehome:focus-visible,.finance-cell.remaining:focus-visible,.finance-cell.bills-cell:focus-visible{
+ outline:2px solid var(--green)!important;outline-offset:2px!important;
+}
+.info-mark{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:13px;height:13px;border:1px solid currentColor;border-radius:50%;
+ font-size:8px!important;font-weight:800!important;line-height:1!important;margin-left:3px;
+}
+.finance-cell.remaining.negative{
+ background:#fff0f0!important;border-color:#f0c7c7!important;color:#b42318!important;
+}
+.finance-cell.remaining.negative b{color:#b42318!important}
+.finance-cell.remaining:not(.negative) b{color:#187451!important}
+.attendance-day.absent{
+ background:#ffe8e8!important;border-color:#df8f8f!important;color:#a52b2b!important;
+}
+.calendar-absent{background:#ffe8e8!important;border-color:#df8f8f!important}
+.calendar-legend{gap:7px 10px!important}
+.pay-breakdown-dialog{
+ width:min(92vw,430px)!important;max-width:calc(100vw - 28px)!important;
+ max-height:82dvh!important;overflow:auto!important;
+ border:1px solid var(--line)!important;border-radius:15px!important;
+ padding:15px!important;box-shadow:0 18px 55px #0003!important;
+}
+.pay-breakdown-dialog::backdrop{background:#12231f99}
+.pay-breakdown-dialog .picker-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.pay-breakdown-dialog .picker-head h3{font-size:16px;margin:0 0 3px}
+.pay-breakdown-dialog .picker-head button{flex:0 0 auto}
+.breakdown-formula{font-size:10px;line-height:1.4;color:var(--muted);background:#f2f6f3;border-radius:8px;padding:8px;margin-bottom:8px}
+.breakdown-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.breakdown-row>div{min-width:0}
+.breakdown-row b{display:block;font-size:11px}
+.breakdown-row small{display:block;font-size:9px;line-height:1.3;color:var(--muted);margin-top:2px}
+.breakdown-row strong{font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.breakdown-total{display:flex;justify-content:space-between;gap:10px;padding:10px 0 5px;margin-top:4px;border-top:1px solid var(--line);font-weight:800}
+.breakdown-total b{font-size:15px}
+#monthlyHistoryTable{overflow-x:auto}
+#monthlyHistoryTable table{min-width:520px}
+#monthlyHistoryTable th,#monthlyHistoryTable td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;font-size:11px;white-space:nowrap}
+#monthlyHistoryTable th:first-child,#monthlyHistoryTable td:first-child{text-align:left}
+#monthlyHistoryTable th{font-size:10px;color:var(--muted);font-weight:800}
+#monthlyHistoryTable .negative{color:#b42318;font-weight:800}
+#monthlyHistoryTable .positive{color:#187451;font-weight:800}
+@media(max-width:520px){
+ .sticky-shell header{padding:10px 11px 9px!important}
+ .sticky-shell h1{font-size:18px!important}
+ .sticky-shell header p{font-size:10px!important}
+ .sticky-shell .tabbar{width:calc(100% - 16px)!important;gap:4px!important}
+ .sticky-shell .tabbar .tabbtn{font-size:9px!important;min-height:35px!important;padding:5px 3px!important}
+ .approved-overview-heading{
+  grid-template-columns:minmax(0,1.08fr) 1px minmax(125px,.92fr)!important;
+  gap:7px!important;padding:8px!important;
+ }
+ .overview-calendar{font-size:20px!important}
+ .approved-overview-heading h2{font-size:clamp(12px,3.5vw,15px)!important}
+ .approved-overview-heading .dashboard-month label{font-size:8px!important}
+ .approved-overview-heading .dashboard-month input{font-size:12px!important;min-height:35px!important;padding:5px!important}
+ .overview-divider{height:38px}
+ .finance-cell{min-height:62px!important;padding:5px 2px!important}
+ .finance-cell small{font-size:7px!important}
+ .finance-cell b{font-size:clamp(10px,3.35vw,14px)!important}
+}
+
 </style>
 </head>
 <body>
@@ -645,9 +775,10 @@ dialog{
 </div>
 <main class="content-main">
 <section class="monthly-dashboard" id="monthlyDashboard">
- <div class="dashboard-heading">
-  <div><div class="dashboard-kicker">PAYROLL PLANNER</div><h2>Monthly payroll overview</h2><p class="sub">Plan bills and estimate the pay needed for each cutoff.</p></div>
-  <div class="dashboard-month"><label for="dashboardMonth">Payroll month</label><input type="month" id="dashboardMonth"></div>
+ <div class="dashboard-heading approved-overview-heading">
+  <div class="overview-title"><span class="overview-calendar" aria-hidden="true">▦</span><h2>Monthly Payroll Overview</h2></div>
+  <div class="overview-divider" aria-hidden="true"></div>
+  <div class="dashboard-month"><label for="dashboardMonth">Payroll Month</label><input type="month" id="dashboardMonth"></div>
  </div>
  <div class="dashboard-cutoffs" id="dashboardCutoffs"></div>
  
@@ -899,7 +1030,7 @@ function updateNightPreview(dialog,hours){
 function detailMarkup(record,which){
  const x=record[which],items=x.items||[],ot=x.otEntries||[],abs=x.absenceDates||[],period=cutoffPeriod(record.month,which),key=record.month+'|'+which;
  return `<div class="record-detail"><h3>Daily attendance</h3><p class="sub">Choose a date from ${period.min} to ${period.max}. Select whether you worked. OT and night differential appear only for days marked Present.</p>
- <div class="calendar-legend"><span><i class="legend-dot calendar-workday"></i> Workday</span><span><i class="legend-dot calendar-rest"></i> Rest day</span><span><i class="legend-dot calendar-regular"></i> Regular holiday</span><span><i class="legend-dot calendar-special"></i> Special holiday</span></div>
+ <div class="calendar-legend"><span><i class="legend-dot calendar-workday"></i> Workday</span><span><i class="legend-dot calendar-rest"></i> Rest day</span><span><i class="legend-dot calendar-regular"></i> Regular holiday</span><span><i class="legend-dot calendar-special"></i> Special holiday</span><span><i class="legend-dot calendar-absent"></i> Absent</span></div>
  <div class="attendance-calendar" data-attendance-calendar="${key}" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
  ${['S','M','T','W','T','F','S'].map(d=>`<b style="font-size:10px;text-align:center">${d}</b>`).join('')}
  ${(()=>{let out='';const [yy,mo,dd]=period.min.split('-').map(Number),[ey,em,ed]=period.max.split('-').map(Number);const first=new Date(yy,mo-1,dd).getDay();for(let i=0;i<first;i++)out+='<span></span>';for(let dt=new Date(yy,mo-1,dd);dt<=new Date(ey,em-1,ed);dt.setDate(dt.getDate()+1)){const date=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');const isAbsent=abs.includes(date),entry=ot.find(e=>e.date===date),holiday=holidayForDate(date),dow=dt.getDay(),isWork=scheduleForDate(date).working,shade=holiday?(holiday[2]==='Regular holiday'?'calendar-regular':'calendar-special'):isWork?'calendar-workday':'calendar-rest';out+=`<button type="button" class="attendance-day ${shade} ${isAbsent?'absent':entry?'worked':''} ${entry?'has-ot':''}" data-day-pick="${key}|${date}" ${holiday?`data-holiday-detail="${date}"`:''}><b>${dt.getDate()}</b>${entry?`<small>${Number(entry.hours)||0}h OT</small>`:''}</button>`;}return out;})()}
@@ -924,10 +1055,10 @@ function renderMonthlyHistory(){
  if(!sorted.length){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  const rows=sorted.map(r=>['first','second'].map((which,i)=>{
   const x=r[which]||{},label=i===0?'1st':'2nd';
-  const ot=(x.otEntries||[]).reduce((sum,e)=>sum+(Number(e.hours)||0),0);
-  return `<tr><td>${monthLabel(r.month)}</td><td>${label} cutoff</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td>${ot.toFixed(1)} hrs</td></tr>`;
+  const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
+  return `<tr><td>${monthLabel(r.month)}</td><td>${label} cutoff</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
- root.innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>OT</th></tr></thead><tbody>${rows}</tbody></table>`;
+ root.innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
@@ -986,7 +1117,54 @@ function syncSelectedMonthBillAmounts(record){
  recalcSavedRecord(record);saveMonthlyHistoryData();
 }
 
+
+function buildCutoffPayBreakdown(record,which){
+ const x=record[which],basic=basicPay(),halfBasic=basic/2;
+ const sss=Math.min(1750,basic*.05)/2,philhealth=basic*.025/2,pagibig=(basic>1500?200:basic*.02)/2;
+ const statutory=sss+philhealth+pagibig;
+ const ot=Number(x.otPay)||0,holiday=Number(x.holiday)||0,absence=Number(x.absenceDeduction)||0;
+ const taxable=Math.max(0,halfBasic+ot+holiday-statutory);
+ const annualTaxable=taxable*24,tax=taxForAnnual(annualTaxable)/24;
+ const baseNet=Math.max(0,halfBasic+ot+holiday-statutory-tax-absence);
+ const bills=Number(x.bills)||0,maxTarget=maxTargetRemainingForCutoff(record,which),minRemaining=baseNet-bills;
+ const savedTarget=Number(x.targetRemaining),target=Number.isFinite(savedTarget)?Math.max(minRemaining,Math.min(maxTarget,savedTarget)):Math.max(0,minRemaining);
+ const targetTakeHome=bills+target;
+ const required=targetTakeHome>baseNet?recommendedAdditionalOt({...record,[which]:{...x,bills:targetTakeHome}},which):{hours:0};
+ const maxHours=maxAdditionalOtHoursForCutoff(record,which),extraHours=Math.min(required.hours,maxHours);
+ const extraNet=netIncreaseFromAdditionalOt(record,which,extraHours),net=baseNet+extraNet;
+ const rows=[
+  ['Half-month basic salary',halfBasic,'Monthly basic salary ÷ 2'],
+  ['Recorded OT and night differential',ot,'Sum of recorded OT premium and night differential'],
+  ['Holiday premium',holiday,'Applicable holiday premium for this cutoff'],
+  ['SSS',-sss,'min(₱1,750, 5% of monthly basic) ÷ 2'],
+  ['PhilHealth',-philhealth,'2.5% of monthly basic ÷ 2'],
+  ['Pag-IBIG',-pagibig,'₱200 (if basic > ₱1,500), otherwise 2% of basic, ÷ 2'],
+  ['Taxable cutoff pay',taxable,'Half basic + OT + holiday − statutory deductions'],
+  ['Withholding tax',-tax,'Annualized tax on taxable cutoff pay × 24, then ÷ 24'],
+  ['Absence deduction',-absence,'Daily absence rate × absent days'],
+  ['Additional OT for target',extraNet,'Estimated net increase from '+extraHours.toFixed(1)+' additional OT hours']
+ ];
+ return `<div class="breakdown-formula">Calculation follows the planner’s current estimated payroll formula. Values are estimates, not an official payslip.</div>
+ ${rows.map(([label,value,formula])=>`<div class="breakdown-row"><div><b>${label}</b><small>${formula}</small></div><strong class="${value<0?'negative':''}">${value<0?'− ':''}${fmt(Math.abs(value))}</strong></div>`).join('')}
+ <div class="breakdown-total"><span>Estimated cutoff take-home</span><b>${fmt(net)}</b></div>
+ <p class="sub">Formula: Base cutoff take-home + estimated net increase from additional OT. Base calculation: half-month basic + recorded OT + holiday premium − statutory deductions − withholding tax − absence deduction.</p>`;
+}
 function bindDashboardDetailEvents(root){
+ root.querySelectorAll('[data-open-computation]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.openComputation,record=monthlyHistory.find(x=>x.month===(get('dashboardMonth')?.value||currentMonthKey()));
+  const dialog=root.querySelector(`[data-pay-breakdown="${which}"]`),content=root.querySelector(`[data-breakdown-content="${which}"]`);
+  if(record&&dialog&&content){content.innerHTML=buildCutoffPayBreakdown(record,which);dialog.showModal();}
+ }));
+ root.querySelectorAll('[data-open-money-left]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.openMoneyLeft,card=btn.closest('.cutoff-dashboard-card'),dialog=root.querySelector(`[data-money-left-dialog="${which}"]`);
+  if(dialog&&card){
+   const takehome=card.querySelector('[data-cutoff-takehome]').textContent,bills=card.querySelector('[data-dashboard-bills] b').textContent,remaining=card.querySelector('[data-cutoff-remaining]').textContent;
+   const n=Number(remaining.replace(/[^0-9.-]/g,''))||0;
+   dialog.querySelector('.breakdown-content').innerHTML=`<div class="lineitem"><span>Estimated take-home</span><b>${takehome}</b></div><div class="lineitem"><span>Monthly expenses</span><b>− ${bills}</b></div><div class="breakdown-total"><span>${n<0?'Shortfall':'Money left'}</span><b class="${n<0?'negative':'positive'}">${remaining}</b></div><p class="sub">Formula: Estimated take-home − Monthly expenses.</p>`;
+   dialog.showModal();
+  }
+ }));
+ root.querySelectorAll('[data-breakdown-close]').forEach(btn=>btn.addEventListener('click',()=>btn.closest('dialog').close()));
  root.querySelectorAll('[data-day-pick]').forEach(btn=>btn.addEventListener('click',()=>{
   const [month,which,date]=btn.dataset.dayPick.split('|'),dialog=root.querySelector(`[data-day-dialog="${month}|${which}"]`),record=monthlyHistory.find(x=>x.month===month),x=record?.[which];if(!dialog||!x)return;
   dialog.dataset.selectedDate=date;dialog.querySelector('[data-dialog-date]').textContent=new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
@@ -1071,10 +1249,23 @@ function renderMonthlyDashboard(){
   return `<article class="cutoff-dashboard-card" data-cutoff-card="${which}">
    <div class="cutoff-card-heading"><h3>${first?'1st Cutoff':'2nd Cutoff'}</h3><span aria-hidden="true">⌄</span></div>
    <div class="cutoff-finance-grid">
-    <div class="finance-cell takehome"><small>ESTIMATED TAKE-HOME</small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></div>
+    <button type="button" class="finance-cell takehome" data-open-computation="${which}"><small>ESTIMATED TAKE-HOME <span class="info-mark">i</span></small><b data-cutoff-takehome>${fmt(projectedTakeHome)}</b></button>
     <button type="button" class="finance-cell bills-cell" data-dashboard-bills="${which}"><small>MONTHLY EXPENSES</small><b>${fmt(bills)}</b></button>
-    <div class="finance-cell remaining"><small>MONEY LEFT</small><b data-cutoff-remaining>${fmt(actualRemaining)}</b></div>
+    <button type="button" class="finance-cell remaining ${actualRemaining<0?'negative':''}" data-open-money-left="${which}"><small>MONEY LEFT <span class="info-mark">i</span></small><b data-cutoff-remaining>${fmt(actualRemaining)}</b></button>
    </div>
+   <dialog class="pay-breakdown-dialog" data-pay-breakdown="${which}">
+    <div class="picker-head"><div><h3>Estimated Take-home Breakdown</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div>
+    <div class="breakdown-content" data-breakdown-content="${which}"></div>
+   </dialog>
+   <dialog class="pay-breakdown-dialog" data-money-left-dialog="${which}">
+    <div class="picker-head"><div><h3>Money Left Breakdown</h3><p class="sub">${first?'1st':'2nd'} cutoff · ${monthLabel(record.month)}</p></div><button type="button" data-breakdown-close aria-label="Close">✕</button></div>
+    <div class="breakdown-content">
+     <div class="lineitem"><span>Estimated take-home</span><b>${fmt(projectedTakeHome)}</b></div>
+     <div class="lineitem"><span>Monthly expenses</span><b>− ${fmt(bills)}</b></div>
+     <div class="lineitem breakdown-total"><span>${actualRemaining<0?'Shortfall':'Money left'}</span><b>${fmt(actualRemaining)}</b></div>
+     <p class="sub">Formula: Estimated take-home − Monthly expenses.</p>
+    </div>
+   </dialog>
    <div class="target-control">
     <div class="target-label"><span>Target remaining</span><b data-target-label>${fmt(target)}</b></div>
     <input type="range" min="${minRemaining}" max="${maxTarget}" step="100" value="${target}" data-target-slider="${which}" aria-label="Target remaining for ${first?'first':'second'} cutoff">
@@ -1099,6 +1290,7 @@ function renderMonthlyDashboard(){
   card.querySelector('[data-target-label]').textContent=fmt(target);
   card.querySelector('[data-cutoff-takehome]').textContent=fmt(projected);
   card.querySelector('[data-cutoff-remaining]').textContent=fmt(remaining);
+  card.querySelector('[data-open-money-left]').classList.toggle('negative',remaining<0);
   const otEl=card.querySelector('[data-ot-recommendation]');
   otEl.textContent=ot.hours===0?'Additional OT needed: 0 hrs':(ot.possible?'Additional OT needed: ':'At least additional OT needed: ')+ot.hours.toFixed(1)+' hrs';
   otEl.classList.toggle('short',ot.hours>0);
