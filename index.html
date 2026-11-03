@@ -121,6 +121,50 @@ details[open]>summary .chevron{transform:rotate(180deg)}
  .weekday-schedule-btn small{font-size:7px!important}
  .day-schedule-dialog{width:min(88vw,310px)!important}
 }
+
+/* Monthly payroll dashboard */
+.hero{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important;padding:12px 16px 10px!important}
+.hero .metric{min-height:78px!important;padding:12px 8px!important;display:flex;flex-direction:column;justify-content:space-between}
+.hero .metric small{font-size:11px!important;line-height:1.25}
+.hero .metric strong{font-size:clamp(17px,4.8vw,25px)!important;line-height:1.1;white-space:nowrap}
+.monthly-dashboard{margin:8px 16px 10px!important;padding:14px!important;background:var(--card,#fff);border:1px solid var(--line);border-radius:16px;box-shadow:0 3px 14px #00000008}
+.dashboard-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.dashboard-kicker{font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--muted);margin-bottom:3px}
+.dashboard-heading h2{font-size:18px;line-height:1.15;margin:0 0 4px}
+.dashboard-heading .sub{font-size:11px;line-height:1.35;margin:0;max-width:240px}
+.dashboard-month{min-width:118px;max-width:145px}\n.dashboard-schedule-readout{font-size:9px!important;color:var(--muted);margin:5px 0 0!important;font-weight:650}
+.dashboard-month label{display:block;font-size:10px;font-weight:700;margin:0 0 4px}
+.dashboard-month input{width:100%;min-width:0;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:11px}
+.dashboard-cutoffs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.cutoff-dashboard-card{min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.cutoff-dashboard-card h3{font-size:12px;margin:0 0 2px}
+.cutoff-dashboard-card .cutoff-date{font-size:9px;color:var(--muted);margin-bottom:8px}
+.cutoff-dashboard-card .cutoff-amount{font-size:19px;font-weight:800;line-height:1.1;margin-bottom:2px}
+.cutoff-dashboard-card .amount-label{font-size:9px;color:var(--muted)}
+.cutoff-dashboard-card .cutoff-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:9px 0}
+.cutoff-dashboard-card .cutoff-stat{background:var(--card,#fff);border-radius:7px;padding:6px}
+.cutoff-dashboard-card .cutoff-stat small{display:block;font-size:8px;color:var(--muted);line-height:1.2}
+.cutoff-dashboard-card .cutoff-stat b{display:block;font-size:11px;margin-top:2px;line-height:1.2}
+.cutoff-dashboard-card .ot-recommendation{font-size:10px;line-height:1.35;padding:7px;border-radius:8px;background:#edf6f0;margin:7px 0;color:#185c43}
+.cutoff-dashboard-card .ot-recommendation.short{background:#fff2e8;color:#8b4b16}
+.cutoff-dashboard-card .cutoff-balance{font-size:11px;font-weight:750;margin:7px 0}
+.cutoff-dashboard-card .cutoff-balance.negative{color:#b4433d}
+.cutoff-dashboard-card .cutoff-balance.positive{color:#187451}
+.cutoff-dashboard-card .bill-assign-btn{width:100%;padding:7px 8px!important;font-size:10px!important;border-radius:8px!important}
+.dashboard-footnote{font-size:9px;color:var(--muted);line-height:1.35;margin-top:9px}
+@media(max-width:390px){
+ .monthly-dashboard{margin:7px 10px 9px!important;padding:10px!important}
+ .dashboard-heading{gap:6px}
+ .dashboard-heading h2{font-size:16px}
+ .dashboard-heading .sub{font-size:10px}
+ .dashboard-month{min-width:105px;max-width:118px}
+ .dashboard-cutoffs{gap:6px}
+ .cutoff-dashboard-card{padding:8px}
+ .cutoff-dashboard-card .cutoff-amount{font-size:16px}
+ .cutoff-dashboard-card .cutoff-stats{gap:4px}
+ .cutoff-dashboard-card .cutoff-stat{padding:5px}
+}
+
 </style>
 </head>
 <body>
@@ -133,6 +177,15 @@ details[open]>summary .chevron{transform:rotate(180deg)}
   <div class="metric"><small>Monthly expenses</small><strong id="heroExpenses">₱0</strong></div>
   <div class="metric"><small>Money left</small><strong id="heroLeft">₱0</strong></div>
  </section>
+
+<section class="monthly-dashboard" id="monthlyDashboard">
+ <div class="dashboard-heading">
+  <div><div class="dashboard-kicker">PAYROLL PLANNER</div><h2>Monthly payroll overview</h2><p class="sub">Plan bills and estimate the pay needed for each cutoff.</p><p class="dashboard-schedule-readout" id="dashboardScheduleReadout"></p></div>
+  <div class="dashboard-month"><label for="dashboardMonth">Payroll month</label><input type="month" id="dashboardMonth"></div>
+ </div>
+ <div class="dashboard-cutoffs" id="dashboardCutoffs"></div>
+ <div class="dashboard-footnote">Scheduled duty hours are based on your weekly day-by-day schedule and do not subtract unpaid breaks. Cutoff estimates include applicable holiday premiums and recorded OT/absence entries. OT uses the planner’s 22 × 8 hourly-rate assumption. Suggested OT is additional planning time, not a guaranteed payroll amount.</div>
+</section>
 
 <nav class="tabbar" aria-label="Planner sections">
  <button class="tabbtn active" data-tab="plannerTab">Benefits · Expenses</button>
@@ -199,7 +252,7 @@ details[open]>summary .chevron{transform:rotate(180deg)}
    <div class="lineitem"><span>Total deductions</span><b id="deductSummary">₱0</b></div>
    <div class="highlight"><small>Money left after expenses</small><strong id="left">₱0</strong><small id="leftPct"></small></div>
    <div class="btnrow"><button class="primary" id="saveBtn" type="button" style="display:none">Save this budget</button><button id="resetBtn">Reset baseline</button></div>
-   <p class="savehint" id="saveStatus">Your settings are saved automatically and synced to your account.</p>
+   <p class="savehint" id="saveStatus">Your settings are saved automatically on this device.</p>
     </div>
    </details>
   </article>
@@ -212,7 +265,7 @@ details[open]>summary .chevron{transform:rotate(180deg)}
    <div class="btnrow"><button class="primary" id="addHistoryMonth" type="button">＋ Add month</button></div>
    <p class="savehint" id="monthlyHistoryStatus" aria-live="polite">Showing the current month and four months ahead.</p>
    <div style="overflow-x:auto" id="monthlyHistoryTable"><p class="callout">No monthly records saved yet. Save the current plan to start your history.</p></div>
-   <p class="callout">Tap a target amount to edit the bill assignment for that month and cutoff. A bill can belong to only one cutoff in the same month. Saved records are stored automatically and synced to your account.</p>
+   <p class="callout">Assign each monthly bill to one cutoff from the Monthly Payroll Overview. Attendance, OT and absences update the selected month’s cutoff estimates. Data stays on this device.</p>
    <dialog id="billPickerDialog"><div class="picker-head"><div><h2 id="billPickerTitle">Select bills</h2><p class="sub" id="billPickerSubtitle">Check the bills to assign to this payday.</p></div><button type="button" id="closeBillPicker" aria-label="Close">✕</button></div><div id="billPickerList"></div><div class="btnrow"><button class="primary" type="button" id="doneBillPicker">Done</button></div></dialog>
   </article>
  </section>
@@ -324,7 +377,7 @@ function calculate(){
  expenseDefs.forEach(([id])=>set(id+'Val',fmt(Number(get(id).value)||0)));
  set('sss',fmt(sss));set('philhealth',fmt(philhealth));set('pagibig',fmt(pagibig));set('tax',fmt(tax));set('calcTaxable',fmt(taxable));set('calcAnnualTaxable',fmt(taxable*12));set('calcAnnualTax',fmt(annualTax));set('deductions',fmt(deductions));
  set('otPay',fmt(0));set('nightPay',fmt(0));set('gross',fmt(gross));set('deductSummary',fmt(deductions));set('net',fmt(net));set('basicLine',fmt(basic));
- set('heroNet',fmt(net));set('totalExpenses',fmt(expenses));set('heroExpenses',fmt(expenses));set('left',fmt(left));set('heroLeft',fmt(left));set('leftPct',net>0?((left/net)*100).toFixed(1)+'% of take-home remaining':'');
+ set('heroNet',fmt(net));set('totalExpenses',fmt(expenses));set('heroExpenses',fmt(expenses));set('left',fmt(left));set('heroLeft',fmt(left));set('leftPct',net>0?((left/net)*100).toFixed(1)+'% of take-home remaining':'');if(get('dashboardMonth')?.value&&typeof renderMonthlyDashboard==='function')renderMonthlyDashboard();
  const benefit=get('regularBenefit');if(benefit)benefit.querySelector('strong').textContent=fmt(regPay)+'/month';
  const note=get('statusNote');if(note)note.textContent=isRegular?'Regular selected: estimated ₱2,000 monthly transport benefit included. Confirm eligibility with HR.':'';
  const hero=get('heroLeft');if(hero){hero.classList.toggle('positive',left>=0);hero.classList.toggle('negative',left<0);}
@@ -349,7 +402,7 @@ function renderBillPicker(which,record=null){
  get('billPickerDialog').showModal();
 }
 get('closeBillPicker').addEventListener('click',()=>{get('billPickerDialog').close();activeRecordEdit=null;});
-get('doneBillPicker').addEventListener('click',()=>{get('billPickerDialog').close();if(activeRecordEdit){const r=monthlyHistory.find(x=>x.month===activeRecordEdit.month);if(r){recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();get('monthlyHistoryStatus').textContent=monthLabel(r.month)+' bill assignments updated.';}activeRecordEdit=null;}});
+get('doneBillPicker').addEventListener('click',()=>{get('billPickerDialog').close();if(activeRecordEdit){const r=monthlyHistory.find(x=>x.month===activeRecordEdit.month);if(r){recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();get('monthlyHistoryStatus').textContent=monthLabel(r.month)+' bill assignments updated.';renderMonthlyDashboard();}activeRecordEdit=null;}});
 
 // Monthly history: auto-created rolling months with expandable cutoff rows.
 let monthlyHistory=[];
@@ -402,7 +455,7 @@ function detailMarkup(record,which){
  </dialog>
  <details class="pay-computation"><summary>Paycheck computation <span>⌄</span></summary><div class="lineitem"><span>Absence deduction</span><b>${fmt(x.absenceDeduction||0)}</b></div><div class="lineitem"><span>OT pay + applicable allowances</span><b>${fmt(x.otPay||0)}</b></div><div class="lineitem"><span>Estimated cutoff take-home</span><b>${fmt(x.paySuggested||0)}</b></div><div class="lineitem"><span>Target bills</span><b>${fmt(x.bills||0)}</b></div><div class="lineitem"><span>Money left / shortfall</span><b>${(x.balance||0)<0?'Short by ':'Left '}${fmt(Math.abs(x.balance||0))}</b></div></details></div>`;
 }
-function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h,e.date),shiftNight=Number(e.shiftNight??scheduledNightHours(e.date));e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*12)/12;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
+function recalcSavedRecord(record){['first','second'].forEach(k=>{const x=record[k];x.items=x.items||[];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.bills=x.items.reduce((a,b)=>a+(Number(b.amount)||0),0);x.absenceDays=x.absenceDates.length;x.absenceDeduction=x.absenceDays*(basicPay()/DAILY_ABSENCE_DIVISOR);x.target=x.bills+x.absenceDeduction;const hourly=basicPay()/(22*8);x.otPay=x.otEntries.reduce((sum,e)=>{const h=Number(e.hours)||0;const night=nightHoursForOt(h,e.date),shiftNight=Number(e.shiftNight??scheduledNightHours(e.date));e.night=night;e.shiftNight=shiftNight;return sum+h*hourly*1.25+(night+shiftNight)*hourly*.10;},0);const holiday=Number(x.holiday)||holidayPayByCutoff(record.month)[k==='first'?'p15':'eom'];x.holiday=holiday;const halfBasic=basicPay()/2;const halfRice=0;const halfDeductions=(Math.min(1750,basicPay()*.05)+basicPay()*.025+(basicPay()>1500?200:basicPay()*.02))/2;const taxable=Math.max(0,halfBasic+halfRice+x.otPay+holiday-halfDeductions);const tax=taxForAnnual(taxable*24)/24;const base=halfBasic+halfRice+x.otPay+holiday-halfDeductions-tax;x.paySuggested=Math.max(0,base-x.absenceDeduction);x.balance=x.paySuggested-x.bills;});}
 
 function renderMonthlyHistory(){
  const root=get('monthlyHistoryTable');if(!root)return;
@@ -436,18 +489,107 @@ function renderMonthlyHistory(){
   const d=btn.closest('dialog'),date=d.dataset.selectedDate,att=d.dataset.attendance, [month,which]=d.dataset.dayDialog.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r||!date)return;
   const x=r[which];x.otEntries=x.otEntries||[];x.absenceDates=x.absenceDates||[];x.otEntries=x.otEntries.filter(e=>e.date!==date);x.absenceDates=x.absenceDates.filter(v=>v!==date);
   if(att==='no')x.absenceDates.push(date);else{const hours=Number(d.querySelector('[data-dialog-ot-slider]').value)||0;const night=nightHoursForOt(hours,date);x.otEntries.push({date,hours,night,shiftNight:scheduledNightHours(date)});}
-  d.close();recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();
+  d.close();recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();renderMonthlyDashboard();
  }));
- root.querySelectorAll('[data-remove-ot]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeOt.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].otEntries.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();}));
- root.querySelectorAll('[data-remove-absence]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeAbsence.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].absenceDates.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();}));
+ root.querySelectorAll('[data-remove-ot]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeOt.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].otEntries.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();renderMonthlyDashboard();}));
+ root.querySelectorAll('[data-remove-absence]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeAbsence.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].absenceDates.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();renderMonthlyDashboard();}));
 }
 function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
 function monthKeyAdd(m,n){const [y,mo]=m.split('-').map(Number);const d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function currentMonthKey(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);}
-function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
+function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
 function ensureRollingMonths(){const start=currentMonthKey();for(let i=0;i<5;i++)addMonthRecord(monthKeyAdd(start,i));}
 get('addHistoryMonth').addEventListener('click',()=>{const sorted=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month));const next=sorted.length?monthKeyAdd(sorted[sorted.length-1].month,1):currentMonthKey();if(addMonthRecord(next))get('monthlyHistoryStatus').textContent=monthLabel(next)+' added.';else get('monthlyHistoryStatus').textContent='That month is already in the history.';});
 function refreshSavedMonthEstimates(){monthlyHistory.forEach(r=>{if(!r.first||!r.second)return;['first','second'].forEach(k=>{const x=r[k];x.holiday=holidayPayByCutoff(r.month)[k==='first'?'p15':'eom'];});recalcSavedRecord(r);});saveMonthlyHistoryData();renderMonthlyHistory();}
+
+function ensureDashboardMonth(month){
+ if(!month)return null;
+ let record=monthlyHistory.find(r=>r.month===month);
+ if(!record){addMonthRecord(month);record=monthlyHistory.find(r=>r.month===month);}
+ return record||null;
+}
+
+function scheduledStatsForRange(minDate,maxDate){
+ let days=0,hours=0;
+ const [sy,sm,sd]=minDate.split('-').map(Number),[ey,em,ed]=maxDate.split('-').map(Number);
+ for(let d=new Date(sy,sm-1,sd);d<=new Date(ey,em-1,ed);d.setDate(d.getDate()+1)){
+  const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const shift=scheduleForDate(date);
+  if(shift.working){let start=timeMinutes(shift.start,'09:00'),end=timeMinutes(shift.end,'18:00');if(end<=start)end+=1440;days++;hours+=(end-start)/60;}
+ }
+ return {days,hours};
+}
+function recommendedAdditionalOt(record,which){
+ const x=record[which],billTarget=Number(x.bills)||0,baseNet=Number(x.paySuggested)||0,gap=billTarget-baseNet;
+ if(gap<=0)return {hours:0,extraNet:0,possible:true,gap:0};
+ const basic=basicPay(),hourly=basic/(22*8),halfBasic=basic/2;
+ const halfDeductions=(Math.min(1750,basic*.05)+basic*.025+(basic>1500?200:basic*.02))/2;
+ const holiday=Number(x.holiday)||0,existingOt=Number(x.otPay)||0,absence=Number(x.absenceDeduction)||0;
+ const netWithExtra=(hours)=>{
+  const extra=hours*hourly*1.25;
+  const taxable=Math.max(0,halfBasic+existingOt+extra+holiday-halfDeductions);
+  const tax=taxForAnnual(taxable*12)/12;
+  return Math.max(0,halfBasic+existingOt+extra+holiday-halfDeductions-tax-absence);
+ };
+ let lo=0,hi=80;
+ if(netWithExtra(hi)-baseNet<gap)return {hours:80,extraNet:netWithExtra(hi)-baseNet,possible:false,gap};
+ for(let i=0;i<36;i++){const mid=(lo+hi)/2;if(netWithExtra(mid)-baseNet>=gap)hi=mid;else lo=mid;}
+ const hours=Math.ceil(hi*2)/2;
+ return {hours,extraNet:netWithExtra(hours)-baseNet,possible:true,gap};
+}
+function syncSelectedMonthBillAmounts(record){
+ if(!record)return;
+ ['first','second'].forEach(k=>{
+  (record[k].items||[]).forEach(item=>{
+   const current=get(item.id);
+   if(current)item.amount=Number(current.value)||0;
+   const def=expenseDefs.find(d=>d[0]===item.id);
+   if(def)item.label=def[1].replace(/^\d+\. /,'');
+  });
+ });
+ recalcSavedRecord(record);saveMonthlyHistoryData();
+}
+function renderMonthlyDashboard(){
+ const monthInput=get('dashboardMonth'),root=get('dashboardCutoffs');
+ if(!monthInput||!root)return;
+ const month=monthInput.value||currentMonthKey(),record=ensureDashboardMonth(month);
+ if(!record){root.innerHTML='<p class="sub">Choose a payroll month to begin.</p>';return;}
+ syncSelectedMonthBillAmounts(record);
+ const monthStats=scheduledStatsForRange(month+'-01',month+'-'+String(new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate()).padStart(2,'0'));
+ const readout=get('dashboardScheduleReadout');if(readout)readout.textContent=monthStats.days+' scheduled days · '+monthStats.hours.toFixed(1)+' scheduled duty hours before unpaid breaks';
+ const totalNet=(Number(record.first.paySuggested)||0)+(Number(record.second.paySuggested)||0);
+ const totalBills=(Number(record.first.bills)||0)+(Number(record.second.bills)||0);
+ const left=totalNet-totalBills;
+ const setText=(id,val)=>{if(get(id))get(id).textContent=fmt(val);};
+ setText('heroNet',totalNet);setText('heroExpenses',totalBills);setText('heroLeft',left);
+ const hero=get('heroLeft');if(hero){hero.classList.toggle('positive',left>=0);hero.classList.toggle('negative',left<0);}
+ root.innerHTML=['first','second'].map(which=>{
+  const x=record[which],first=which==='first',ot=recommendedAdditionalOt(record,which);
+  const title=first?'First cutoff':'Second cutoff',payday=first?'15th payday':'Month-end payday';
+  const period=cutoffPeriod(month,which),scheduleStats=scheduledStatsForRange(period.min,period.max),actualOt=(x.otEntries||[]).reduce((s,e)=>s+(Number(e.hours)||0),0);
+  const holiday=Number(x.holiday)||0,balance=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
+  const otText=ot.hours===0?'No additional OT estimated. Projected pay covers the assigned bills.':(ot.possible?'Estimated additional OT needed: ':'At least estimated OT needed: ')+ot.hours.toFixed(1)+' hours ('+fmt(ot.extraNet)+' estimated added take-home).';
+  return `<article class="cutoff-dashboard-card"><h3>${title}</h3><div class="cutoff-date">${payday} · ${period.min.slice(5)} to ${period.max.slice(5)}<br>${scheduleStats.days} scheduled days · ${scheduleStats.hours.toFixed(1)} duty hrs</div>
+   <div class="cutoff-amount">${fmt(x.paySuggested||0)}</div><div class="amount-label">Projected cutoff take-home</div>
+   <div class="cutoff-stats">
+    <div class="cutoff-stat"><small>Bills assigned</small><b>${fmt(x.bills||0)}</b></div>
+    <div class="cutoff-stat"><small>Holiday premium</small><b>${fmt(holiday)}</b></div>
+    <div class="cutoff-stat"><small>Recorded OT</small><b>${actualOt.toFixed(1)} hrs</b></div>
+    <div class="cutoff-stat"><small>Absence deduction</small><b>${fmt(x.absenceDeduction||0)}</b></div>
+   </div><div class="ot-recommendation ${ot.hours?'short':''}">${otText}${holiday>0?' Holiday premium is already included.':''}</div>
+   <div class="cutoff-balance ${balance>=0?'positive':'negative'}">${balance>=0?'After bills: '+fmt(balance):'Shortfall before extra OT: '+fmt(Math.abs(balance))}</div>
+   <button type="button" class="bill-assign-btn" data-dashboard-bills="${which}">Assign bills to this cutoff</button></article>`;
+ }).join('');
+ root.querySelectorAll('[data-dashboard-bills]').forEach(btn=>btn.addEventListener('click',()=>{
+  const which=btn.dataset.dashboardBills;activeRecordEdit={month,which};
+  renderBillPicker(which==='first'?'15':'eom',record);
+ }));
+}
+get('dashboardMonth')?.addEventListener('change',()=>{
+ const month=get('dashboardMonth').value;
+ if(month){ensureDashboardMonth(month);renderMonthlyDashboard();renderMonthlyHistory();}
+});
+
 
 let holidayWorkEntries=[];
 function holidayTypeForDate(date){for(const year of [2026,2027]){const found=(holidayData[year]||[]).find(x=>x[0]===date);if(found)return found[2];}return 'Ordinary working day';}
@@ -507,6 +649,9 @@ get('resetBtn').addEventListener('click',()=>{const s={employmentStatus:'probati
 try{const saved=localStorage.getItem('salaryBudgetPlanner');if(saved){applyState(JSON.parse(saved));}else {renderWeeklySchedule();rebuildAutoHolidayEntries();calculate()}}catch(e){renderWeeklySchedule();rebuildAutoHolidayEntries();calculate()}
 
 refreshSavedMonthEstimates();
+ensureRollingMonths();
+get('dashboardMonth').value=currentMonthKey();
+renderMonthlyDashboard();
 renderPayCalendar();
 
 document.querySelectorAll('.tabbtn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.tabpage').forEach(page=>page.classList.toggle('active',page.id===btn.dataset.tab));window.scrollTo({top:0,behavior:'smooth'});}));
