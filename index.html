@@ -912,7 +912,8 @@ input[type="range"][data-target-slider]{
       <p class="schedule-footnote">Set different duty hours for each day, or mark a day as a rest day.</p>
       <input id="dutyStart" type="hidden" value="09:00"><input id="dutyEnd" type="hidden" value="18:00">
     </div>
-   <div class="section"><div class="section-head"><h3>Additional & regularization benefits</h3><button type="button" class="small-action" id="addBenefit">＋ Add</button></div><p class="sub">Add, edit or remove any company benefit, including regularization and other additional benefits. Benefits are listed separately; include them in payroll estimates only after confirming their tax and payroll treatment.</p><div id="customBenefits"></div></div>
+   <div class="section benefit-group"><div class="section-head"><h3>Current Benefits</h3><button type="button" class="small-action" id="addCurrentBenefit">＋ Add</button></div><p class="sub">Benefits you receive under your current employment status, including probationary benefits.</p><div id="currentBenefits"></div></div>
+   <div class="section benefit-group"><div class="section-head"><h3>Regularization Benefits</h3><button type="button" class="small-action" id="addRegularBenefit">＋ Add</button></div><p class="sub">Benefits that become available only after regularization.</p><div id="regularBenefits"></div></div>
    <p class="callout">Overtime and night differential are recorded by date inside each cutoff under Payroll History.</p>
    <p class="callout">Payroll estimates only. Confirm contribution tables, tax treatment, OT divisor, and benefit eligibility with your company HR/payroll.</p>
     </div>
@@ -1186,7 +1187,7 @@ function renderMonthlyHistory(){
   const x=r[which]||{},label=i===0?'First':'Second';
   const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
   const month=new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'});
-  return `<tr><td>${month}</td><td><span>${label}</span><button type="button" class="history-delete-cutoff" data-delete-cutoff="${r.month}|${which}" aria-label="Delete ${label} cutoff for ${month}" title="Delete this cutoff">×</button></td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
+  return `<tr><td class="history-month-cell"><span class="history-month-label">${month}</span><button type="button" class="history-delete-cutoff" data-delete-cutoff="${r.month}|${which}" aria-label="Delete ${label} cutoff for ${month}">Delete</button></td><td>${label}</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
  if(!rows){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  root.innerHTML=`<table class="payroll-history-table"><colgroup><col style="width:22%"><col style="width:17%"><col style="width:21%"><col style="width:19%"><col style="width:21%"></colgroup><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -1199,6 +1200,11 @@ function renderMonthlyHistory(){
   saveMonthlyHistoryData();
   renderMonthlyHistory();
  }));
+ root.querySelectorAll('tbody tr').forEach(row=>{
+  let startX=0,startY=0;
+  row.addEventListener('touchstart',e=>{const t=e.touches[0];startX=t.clientX;startY=t.clientY;},{passive:true});
+  row.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.25){row.classList.toggle('history-row-revealed',dx<0);}}, {passive:true});
+ });
 }
 
 function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
@@ -1651,12 +1657,36 @@ document.querySelectorAll('.tabbtn').forEach(btn=>btn.addEventListener('click',(
  else{get('monthlyDashboard').hidden=true;document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.tabpage').forEach(page=>page.classList.toggle('active',page.id===btn.dataset.tab));}
  window.scrollTo({top:0,behavior:'smooth'});
 }));
-// Editable custom budget rows. Existing payroll-linked benefits remain calculated automatically.
-const customBenefitsRoot=get('customBenefits');let customBenefits=[];try{customBenefits=JSON.parse(localStorage.getItem('payPlannerCustomBenefits')||'[]')||[]}catch(e){customBenefits=[]}
-function renderCustomBenefits(){customBenefitsRoot.innerHTML=customBenefits.map((b,i)=>`<div class="benefit-editor-row"><div><b>${escapeText(b.name)}</b><small>${fmt(Number(b.amount)||0)}${b.frequency?' · '+escapeText(b.frequency):''}</small></div><div class="expense-actions"><button type="button" data-benefit-edit="${i}">Edit</button><button type="button" data-benefit-delete="${i}">−</button></div></div>`).join('')||'<p class="sub">No additional benefits added.</p>';localStorage.setItem('payPlannerCustomBenefits',JSON.stringify(customBenefits));}
+// Separate editable benefit lists. Migrate legacy entries into Current Benefits to preserve existing data.
+const currentBenefitsRoot=get('currentBenefits'),regularBenefitsRoot=get('regularBenefits');
+function readBenefitList(key){try{return JSON.parse(localStorage.getItem(key)||'[]')||[]}catch(e){return []}}
+let currentBenefits=readBenefitList('payPlannerCurrentBenefits'),regularBenefits=readBenefitList('payPlannerRegularBenefits');
+if(!currentBenefits.length&&!regularBenefits.length){
+ try{currentBenefits=JSON.parse(localStorage.getItem('payPlannerCustomBenefits')||'[]')||[]}catch(e){currentBenefits=[]}
+}
 function escapeText(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function editBenefit(i){const current=customBenefits[i]||{};const name=prompt('Benefit name:',current.name||'');if(!name?.trim())return false;const raw=prompt('Amount in PHP:',String(current.amount??0));if(raw===null)return false;const amount=Number(raw);if(!Number.isFinite(amount)||amount<0)return false;const frequency=prompt('Frequency (e.g. Monthly, Annual, One-time):',current.frequency||'Monthly');if(frequency===null)return false;customBenefits[i]={name:name.trim(),amount,frequency:frequency.trim()};renderCustomBenefits();return true;}get('addBenefit')?.addEventListener('click',()=>{const draft={name:'',amount:0,frequency:'Monthly'};customBenefits.push(draft);const i=customBenefits.length-1;if(!editBenefit(i)){customBenefits.splice(i,1);renderCustomBenefits();}});customBenefitsRoot?.addEventListener('click',e=>{const edit=e.target.closest('[data-benefit-edit]'),del=e.target.closest('[data-benefit-delete]');if(edit)editBenefit(Number(edit.dataset.benefitEdit));if(del){const i=Number(del.dataset.benefitDelete);if(confirm('Delete this benefit?')){customBenefits.splice(i,1);renderCustomBenefits();}}});
-customBenefitsRoot?.addEventListener('click',e=>{const edit=e.target.closest('[data-benefit-edit]'),del=e.target.closest('[data-benefit-delete]');if(edit){const i=Number(edit.dataset.benefitEdit),b=customBenefits[i];const name=prompt('Benefit name:',b.name);if(!name?.trim())return;const amount=Number(prompt('Amount in PHP:',String(b.amount)));if(!Number.isFinite(amount)||amount<0)return;const frequency=prompt('Frequency:',b.frequency||'Monthly')||'';customBenefits[i]={name:name.trim(),amount,frequency};renderCustomBenefits();}if(del){customBenefits.splice(Number(del.dataset.benefitDelete),1);renderCustomBenefits();}});renderCustomBenefits();
+function renderBenefitList(root,list,key){
+ if(!root)return;
+ root.innerHTML=list.map((b,i)=>`<div class="benefit-editor-row"><div><b>${escapeText(b.name)}</b><small>${fmt(Number(b.amount)||0)}${b.frequency?' · '+escapeText(b.frequency):''}</small></div><div class="expense-actions"><button type="button" data-benefit-edit="${i}" data-benefit-key="${key}">Edit</button><button type="button" data-benefit-delete="${i}" data-benefit-key="${key}">−</button></div></div>`).join('')||'<p class="sub">No benefits added.</p>';
+ localStorage.setItem(key,JSON.stringify(list));
+}
+function renderBenefits(){renderBenefitList(currentBenefitsRoot,currentBenefits,'payPlannerCurrentBenefits');renderBenefitList(regularBenefitsRoot,regularBenefits,'payPlannerRegularBenefits');}
+function editBenefitIn(list,i){
+ const b=list[i]||{},name=prompt('Benefit name:',b.name||'');if(!name?.trim())return;
+ const raw=prompt('Amount in PHP:',String(b.amount??0));if(raw===null)return;
+ const amount=Number(raw);if(!Number.isFinite(amount)||amount<0)return;
+ const frequency=prompt('Frequency (e.g. Monthly, Annual, One-time):',b.frequency||'Monthly');if(frequency===null)return;
+ list[i]={name:name.trim(),amount,frequency:frequency.trim()};renderBenefits();
+}
+function addBenefitTo(list){const name=prompt('Benefit name:');if(!name?.trim())return;const amount=Number(prompt('Amount in PHP:','0'));if(!Number.isFinite(amount)||amount<0)return;const frequency=prompt('Frequency (e.g. Monthly, Annual, One-time):','Monthly');if(frequency===null)return;list.push({name:name.trim(),amount,frequency:frequency.trim()});renderBenefits();}
+get('addCurrentBenefit')?.addEventListener('click',()=>addBenefitTo(currentBenefits));
+get('addRegularBenefit')?.addEventListener('click',()=>addBenefitTo(regularBenefits));
+[currentBenefitsRoot,regularBenefitsRoot].forEach(root=>root?.addEventListener('click',e=>{
+ const edit=e.target.closest('[data-benefit-edit]'),del=e.target.closest('[data-benefit-delete]');if(!edit&&!del)return;
+ const list=(edit||del).dataset.benefitKey==='payPlannerCurrentBenefits'?currentBenefits:regularBenefits,i=Number((edit||del).dataset.benefitEdit??(edit||del).dataset.benefitDelete);
+ if(edit)editBenefitIn(list,i);else if(confirm('Delete this benefit?')){list.splice(i,1);renderBenefits();}
+}));
+renderBenefits();
 get('addExpense')?.addEventListener('click',()=>{const label=prompt('Expense name:');if(!label?.trim())return;const amount=Number(prompt('Monthly amount in PHP:','0'));if(!Number.isFinite(amount)||amount<0)return;const id='customExpense'+Date.now();const newDef=[id,label.trim(),amount,50000,100];expenseDefs.push(newDef);customExpenseDefs.push(newDef);localStorage.setItem('payPlannerCustomExpenseDefs',JSON.stringify(customExpenseDefs));ids.push(id);const row=document.createElement('div');row.className='expense-row';row.dataset.expenseRow=id;row.innerHTML=`<div class="fieldhead"><label for="${id}">${escapeText(label.trim())}</label><span class="val" id="${id}Val">${fmt(amount)}</span><div class="expense-actions"><button type="button" data-edit-expense="${id}">Edit</button><button type="button" data-delete-expense="${id}">−</button></div></div><input id="${id}" type="range" min="0" max="50000" step="100" value="${amount}"><div class="ends"><span>₱0</span><span>₱50,000</span></div><input type="hidden" id="${id}Cutoff" value="eom">`;expenseRoot.appendChild(row);get(id).addEventListener('input',calculate);get(id).addEventListener('change',calculate);get(id+'Cutoff').addEventListener('change',calculate);calculate();});
 expenseRoot.addEventListener('click',e=>{const edit=e.target.closest('[data-edit-expense]'),del=e.target.closest('[data-delete-expense]');if(edit){const id=edit.dataset.editExpense,def=expenseDefs.find(x=>x[0]===id),label=prompt('Expense name:',def[1].replace(/^\d+\. /,''));if(!label?.trim())return;def[1]=label.trim();const amount=Number(prompt('Monthly amount in PHP:',get(id).value));if(!Number.isFinite(amount)||amount<0)return;get(id).value=amount;get(id).max=Math.max(Number(get(id).max),amount);def[2]=amount;def[1]=label.trim();if(customExpenseDefs.some(x=>x[0]===id))localStorage.setItem('payPlannerCustomExpenseDefs',JSON.stringify(customExpenseDefs));renderExpenseLabel(id,label.trim());calculate();}if(del){const id=del.dataset.deleteExpense;if(!confirm('Remove this expense?'))return;const index=expenseDefs.findIndex(x=>x[0]===id);if(index>=0)expenseDefs.splice(index,1);customExpenseDefs=customExpenseDefs.filter(x=>x[0]!==id);localStorage.setItem('payPlannerCustomExpenseDefs',JSON.stringify(customExpenseDefs));const idIndex=ids.indexOf(id);if(idIndex>=0)ids.splice(idIndex,1);get(id)?.closest('.expense-row')?.remove();calculate();}});
 function renderExpenseLabel(id,label){const row=get(id)?.closest('.expense-row');if(row){row.querySelector('label').textContent=label;row.querySelector('.ends span:last-child').textContent=fmt(Number(get(id).max));}}
@@ -1968,6 +1998,23 @@ main.content-main{
  vertical-align:middle!important;cursor:pointer!important;
 }
 #monthlyHistoryTable .payroll-history-table td:nth-child(2){white-space:nowrap!important}
+
+</style>
+<style>
+
+/* Swipe-to-reveal delete control inside the Month column */
+#monthlyHistoryTable .history-month-cell{position:relative!important;overflow:hidden!important}
+#monthlyHistoryTable .history-month-label{display:inline-block!important;transition:transform .18s ease!important}
+#monthlyHistoryTable .history-delete-cutoff{
+ display:none!important;width:auto!important;height:24px!important;min-width:48px!important;
+ margin:0!important;padding:2px 7px!important;border-radius:6px!important;
+ font-size:10px!important;border:1px solid #d98b8b!important;background:#fff0f0!important;
+}
+#monthlyHistoryTable tr.history-row-revealed .history-delete-cutoff{display:inline-flex!important}
+#monthlyHistoryTable tr.history-row-revealed .history-month-label{display:none!important}
+#monthlyHistoryTable .payroll-history-table td:nth-child(2){white-space:normal!important}
+.benefit-group{margin-top:12px!important}
+.benefit-group+.benefit-group{padding-top:10px!important;border-top:1px solid var(--line)!important}
 
 </style>
 </body>
