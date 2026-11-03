@@ -1248,15 +1248,18 @@ function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JS
 function monthKeyAdd(m,n){const [y,mo]=m.split('-').map(Number);const d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function currentMonthKey(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);}
 function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
-function ensureRollingMonths(){const start=currentMonthKey();for(let i=0;i<5;i++)addMonthRecord(monthKeyAdd(start,i));}
+function ensureRollingMonths(){addMonthRecord(currentMonthKey());}
 get('addHistoryMonth').addEventListener('click',()=>{
  const selected=get('dashboardMonth')?.value||currentMonthKey();
- const record=ensureDashboardMonth(selected);
- if(record){
-  recalcSavedRecord(record);
-  saveMonthlyHistoryData();
+ let next=monthKeyAdd(selected,1);
+ while(monthlyHistory.some(r=>r.month===next))next=monthKeyAdd(next,1);
+ if(addMonthRecord(next)){
+  get('dashboardMonth').value=next;
+  const record=ensureDashboardMonth(next);
+  if(record){recalcSavedRecord(record);saveMonthlyHistoryData();}
+  renderMonthlyDashboard();
   renderMonthlyHistory();
-  get('monthlyHistoryStatus').textContent=monthLabel(selected)+' synced from Monthly Payroll Overview.';
+  get('monthlyHistoryStatus').textContent=monthLabel(next)+' added and selected.';
  }
 });
 function refreshSavedMonthEstimates(){monthlyHistory.forEach(r=>{if(!r.first||!r.second)return;['first','second'].forEach(k=>{const x=r[k];x.holiday=holidayPayByCutoff(r.month)[k==='first'?'p15':'eom'];});recalcSavedRecord(r);});saveMonthlyHistoryData();renderMonthlyHistory();}
