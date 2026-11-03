@@ -1,5 +1,5 @@
-const CACHE='pay-budget-planner-v32';
-const APP_SHELL=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
+const CACHE='salary-planner-v1';
+const APP_SHELL=['./','./index.html','./manifest.json','./config.js','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -13,7 +13,7 @@ self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
       .then(keys=>Promise.all(
-        keys.filter(key=>key.startsWith('emerson-planner-') && key!==CACHE)
+        keys.filter(key=>key.startsWith('salary-planner-') && key!==CACHE)
           .map(key=>caches.delete(key))
       ))
       .then(()=>self.clients.claim())

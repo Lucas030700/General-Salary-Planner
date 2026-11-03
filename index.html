@@ -260,7 +260,7 @@ function calculate(){
  const note=get('statusNote');if(note)note.textContent=isRegular?'Regular selected: estimated ₱2,000 monthly transport benefit included. Confirm eligibility with HR.':'';
  const hero=get('heroLeft');if(hero){hero.classList.toggle('positive',left>=0);hero.classList.toggle('negative',left<0);}
  if(window.__plannerAutoSaveTimer)clearTimeout(window.__plannerAutoSaveTimer);
- window.__plannerAutoSaveTimer=setTimeout(()=>{try{if(window.__salaryPlannerApplyingRemote)return;localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));if(window.__salaryPlannerQueueCloudSync)window.__salaryPlannerQueueCloudSync();const status=get('saveStatus');if(status)status.textContent='Automatically saved on this device and syncing to your account…';}catch(e){console.warn('Planner autosave failed',e);}},350);
+ window.__plannerAutoSaveTimer=setTimeout(()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));const status=get('saveStatus');if(status)status.textContent='Automatically saved on this device and syncing to your account…';}catch(e){console.warn('Planner autosave failed',e);}},350);
  return {net,expenses,left,gross,deductions,otPay:0,nightPay:0,holiday};
 }
 // Interactive bill assignment: each expense belongs to exactly one payday.
@@ -372,7 +372,7 @@ function renderMonthlyHistory(){
  root.querySelectorAll('[data-remove-ot]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeOt.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].otEntries.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();}));
  root.querySelectorAll('[data-remove-absence]').forEach(btn=>btn.addEventListener('click',()=>{const [month,which,i]=btn.dataset.removeAbsence.split('|'),r=monthlyHistory.find(x=>x.month===month);if(!r)return;r[which].absenceDates.splice(Number(i),1);recalcSavedRecord(r);saveMonthlyHistoryData();renderMonthlyHistory();}));
 }
-function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));if(window.__salaryPlannerQueueCloudSync)window.__salaryPlannerQueueCloudSync();}
+function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
 function monthKeyAdd(m,n){const [y,mo]=m.split('-').map(Number);const d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function currentMonthKey(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);}
 function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
@@ -429,15 +429,15 @@ function renderPayCalendar(){
  get('minimumPay').textContent=fmt(base);get('maximumPay').textContent=fmt(Math.max(base,basic+maxOT-sss-ph-pi-taxMax));
 }
 get('payCalendarMonth')?.addEventListener('change',renderPayCalendar);
-try{const historySaved=localStorage.getItem('salaryMonthlyHistory')||localStorage.getItem('emersonMonthlyHistory')||'[]';monthlyHistory=JSON.parse(historySaved)||[];if(!localStorage.getItem('salaryMonthlyHistory')&&historySaved!=='[]')localStorage.setItem('salaryMonthlyHistory',historySaved);}catch(e){monthlyHistory=[];}
+try{monthlyHistory=JSON.parse(localStorage.getItem('salaryMonthlyHistory')||'[]')||[];}catch(e){monthlyHistory=[];}
 // Existing history is loaded here; rolling months are seeded after saved planner settings are restored.
 function state(){let s={};ids.forEach(id=>s[id]=get(id).type==='checkbox'?get(id).checked:get(id).value);expenseDefs.forEach(([id])=>s[id+'Cutoff']=get(id+'Cutoff').value);s.workdays=[...document.querySelectorAll('.workday')].map(x=>({day:x.value,checked:x.checked}));s.holidayHoursPerDay=get('holidayHoursPerDay').value;s.holidayNightPerDay=get('holidayNightPerDay').value;s.assumeHolidayWorked=get('assumeHolidayWorked').checked;return s}
 function applyState(s){ids.forEach(id=>{if(s[id]!==undefined){if(get(id).type==='checkbox')get(id).checked=!!s[id];else get(id).value=s[id]}});expenseDefs.forEach(([id])=>{if(s[id+'Cutoff'])get(id+'Cutoff').value=s[id+'Cutoff']});if(s.baseHoursWeek&&get('baseHoursWeek'))get('baseHoursWeek').value=s.baseHoursWeek;if(Array.isArray(s.workdays))s.workdays.forEach(w=>{const el=document.querySelector('.workday[value=\"'+w.day+'\"]');if(el)el.checked=!!w.checked});if(s.holidayHoursPerDay)get('holidayHoursPerDay').value=s.holidayHoursPerDay;if(s.holidayNightPerDay)get('holidayNightPerDay').value=s.holidayNightPerDay;if(s.assumeHolidayWorked!==undefined)get('assumeHolidayWorked').checked=!!s.assumeHolidayWorked;rebuildAutoHolidayEntries();calculate()}
 ids.forEach(id=>{get(id).addEventListener('input',calculate);get(id).addEventListener('change',calculate)});get('basicSalary').addEventListener('input',()=>{calculate();refreshSavedMonthEstimates();renderPayCalendar()});get('workPosition').addEventListener('input',()=>{calculate();});expenseDefs.forEach(([id])=>get(id+'Cutoff').addEventListener('change',calculate));
-get('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));get('saveStatus').textContent='Saved on this device. Open this app in the same browser to restore it.'}catch(e){get('saveStatus').textContent='Could not save on this browser. Please keep a note of your settings.'}});
+get('saveBtn').addEventListener('click',()=>{try{localStorage.setItem('salaryBudgetPlanner',JSON.stringify(state()));get('saveStatus').textContent='Saved on this device. Your data stays in this browser and is not uploaded to a cloud account.'}catch(e){get('saveStatus').textContent='Could not save on this browser. Please keep a note of your settings.'}});
 get('resetBtn').addEventListener('click',()=>{const s={employmentStatus:'probationary',ot:0,night:0,otdays:0,savings:0,investment:5000,jowa:3000,house:5000,mama:10000,utilities:1500,food:6000,transport:1500,wifi:1000,personal:2000,other:1000};expenseDefs.forEach(([id])=>s[id+'Cutoff']='eom');applyState(s);get('saveStatus').textContent='Baseline restored. Press Save to keep these settings.'});
 
-try{const saved=localStorage.getItem('salaryBudgetPlanner')||localStorage.getItem('emersonSalaryPlanner');if(saved){applyState(JSON.parse(saved));localStorage.setItem('salaryBudgetPlanner',saved);}else {rebuildAutoHolidayEntries();calculate()}}catch(e){rebuildAutoHolidayEntries();calculate()}
+try{const saved=localStorage.getItem('salaryBudgetPlanner');if(saved){applyState(JSON.parse(saved));}else {rebuildAutoHolidayEntries();calculate()}}catch(e){rebuildAutoHolidayEntries();calculate()}
 
 refreshSavedMonthEstimates();
 renderPayCalendar();
@@ -526,201 +526,6 @@ function sizeStickyHeader(){const shell=document.querySelector('.sticky-shell');
 @media(max-width:520px){.tabbar .tabbtn{font-size:9px!important;padding:8px 3px!important}.content-main{padding-top:4px!important}.section-head{align-items:flex-start}}
 
 </style>
-<div id="cloudAuthGate">
- <div id="cloudAuthCard">
-  <h2>Salary & Budget Planner</h2>
-  <p>Sign in to sync your planner across PC and iPhone.</p>
-  <label for="cloudEmail">Email address</label>
-  <input id="cloudEmail" type="email" autocomplete="email" placeholder="you@example.com">
-  <label for="cloudPassword">Password</label>
-  <input id="cloudPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters">
-  <div id="cloudAuthActions">
-   <button id="cloudSignIn" type="button">Sign in</button>
-   <button id="cloudSignUp" type="button">Create account</button>
-  </div>
-  <div id="cloudAuthMsg">Your planner data is private to your account.</div>
- </div>
-</div>
-<div id="cloudAccountBar"><span id="cloudSyncStatus">Cloud sync ready</span><span id="cloudUserEmail"></span><button id="cloudSignOut" type="button">Sign out</button></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(() => {
- const SUPABASE_URL = "https://tkqgqwhjqidkprzqpcdc.supabase.co";
- const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_jBldoZA2KNt6SkEojsDuAg_aNjlqc79";
- const gate = document.getElementById('cloudAuthGate');
- const msg = document.getElementById('cloudAuthMsg');
- const syncLabel = document.getElementById('cloudSyncStatus');
- const bar = document.getElementById('cloudAccountBar');
- const emailLabel = document.getElementById('cloudUserEmail');
- let client, currentUser=null, syncing=false, remoteApplying=false, syncTimer=null, channel=null;
- const STORAGE_KEYS=['salaryBudgetPlanner','salaryMonthlyHistory'];
- const originalSet=Storage.prototype.setItem;
- function setStatus(t){syncLabel.textContent=t;}
- function localPayload(){
-   let planner={}, history=[];
-   try{
-     // `state()` is declared by the planner's main script and returns the
-     // current values of all sliders, selects, checkboxes and cutoff settings.
-     planner=typeof state==='function' ? state() : JSON.parse(localStorage.getItem('salaryBudgetPlanner')||'{}');
-   }catch(e){
-     console.error('Could not read live planner state',e);
-     try{planner=JSON.parse(localStorage.getItem('salaryBudgetPlanner')||'{}')}catch(_){}
-   }
-   try{history=JSON.parse(localStorage.getItem('salaryMonthlyHistory')||'[]')}catch(e){}
-   return {planner,history,version:24};
- }
- let pendingSync=false;
- async function pushCloud(){
-   if(!currentUser||remoteApplying)return;
-   if(syncing){pendingSync=true;return;}
-   syncing=true; setStatus('Syncing…');
-   try{
-     const payload=localPayload();
-     const writeAt=new Date().toISOString();window.__lastCloudWriteAt=writeAt;
-     const {error}=await client.from('planner_data').upsert({
-       user_id:currentUser.id, planner_state:payload, updated_at:writeAt
-     },{onConflict:'user_id'});
-     if(error)throw error;
-     setStatus('Synced');
-   }catch(e){console.error('Cloud sync failed',e);setStatus('Sync issue: '+(e.message||'check connection'));}
-   finally{
-     syncing=false;
-     if(pendingSync){pendingSync=false;clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,250);}
-   }
- }
- function schedulePush(){
-   if(!currentUser||remoteApplying)return;
-   clearTimeout(syncTimer);syncTimer=setTimeout(pushCloud,500);
- }
- window.__salaryPlannerQueueCloudSync=schedulePush;
-  window.addEventListener('online',()=>{if(currentUser){setStatus('Back online · syncing…');schedulePush();}});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden && currentUser){schedulePush();}});
-
- // Capture real planner edits directly. This is the reliable trigger for cloud
- // writes; localStorage remains the offline cache, not the only sync signal.
- let directCaptureTimer=null;
- function captureLivePlannerChange(){
-   if(!currentUser || remoteApplying)return;
-   clearTimeout(directCaptureTimer);
-   directCaptureTimer=setTimeout(()=>{
-     try{
-       if(typeof state==='function'){
-         const liveState=state();
-         originalSet.call(localStorage,'salaryBudgetPlanner',JSON.stringify(liveState));
-       }
-       setStatus('Changes detected · syncing…');
-       schedulePush();
-     }catch(e){
-       console.error('Planner change capture failed',e);
-       setStatus('Sync issue: '+(e.message||'could not capture planner changes'));
-     }
-   },450);
- }
- document.addEventListener('input',e=>{
-   if(e.target && e.target.matches('input,select,textarea'))captureLivePlannerChange();
- },true);
- document.addEventListener('change',e=>{
-   if(e.target && e.target.matches('input,select,textarea'))captureLivePlannerChange();
- },true);
-
- Storage.prototype.setItem=function(k,v){
-   originalSet.call(this,k,v);
-   if(STORAGE_KEYS.includes(k))schedulePush();
- };
- async function pullCloud(){
-   const {data,error}=await client.from('planner_data').select('planner_state,updated_at').eq('user_id',currentUser.id).maybeSingle();
-   if(error)throw error;
-   if(data && data.planner_state){
-     remoteApplying=true;
-     const p=data.planner_state;
-     try{
-       if(p.planner)localStorage.setItem('salaryBudgetPlanner',JSON.stringify(p.planner));
-       if(Array.isArray(p.history))localStorage.setItem('salaryMonthlyHistory',JSON.stringify(p.history));
-       setStatus('Loaded cloud data');
-     }finally{ /* remote guard released after UI hydration */ }
-     // Apply cloud data to the current UI without a full-page reload.
-     if(p.planner && typeof applyState==='function'){
-       window.__salaryPlannerApplyingRemote=true;
-       applyState(p.planner);
-     }
-     if(Array.isArray(p.history)){
-       monthlyHistory=p.history;
-       renderMonthlyHistory();
-     }
-     setTimeout(()=>{
-       remoteApplying=false;
-       window.__salaryPlannerApplyingRemote=false;
-     },700);
-   }else{
-     // First sign-in: migrate existing device data into the new cloud account.
-     await pushCloud();
-     setStatus('First device migrated');
-   }
- }
- async function startRealtime(){
-   if(channel)await client.removeChannel(channel);
-   channel=client.channel('planner-sync-'+currentUser.id)
-    .on('postgres_changes',{event:'*',schema:'public',table:'planner_data',filter:'user_id=eq.'+currentUser.id},async payload=>{
-      const p=payload.new?.planner_state;if(!p)return;
-      const incomingAt=Date.parse(payload.new?.updated_at||'');
-      const ownAt=Date.parse(window.__lastCloudWriteAt||'');
-      if(Number.isFinite(incomingAt) && Number.isFinite(ownAt) && incomingAt===ownAt)return;
-      remoteApplying=true;
-      try{
-        if(p.planner && typeof applyState==='function'){
-          window.__salaryPlannerApplyingRemote=true;
-          applyState(p.planner);
-        }
-        if(Array.isArray(p.history)){
-          monthlyHistory=p.history;
-          localStorage.setItem('salaryMonthlyHistory',JSON.stringify(p.history));
-          renderMonthlyHistory();
-        }
-        if(p.planner)localStorage.setItem('salaryBudgetPlanner',JSON.stringify(p.planner));
-        setStatus('Updated from another device');
-      }catch(e){
-        console.error('Could not apply remote planner update',e);
-        setStatus('Sync issue: '+(e.message||'could not apply cloud update'));
-      }finally{
-        setTimeout(()=>{
-          remoteApplying=false;
-          window.__salaryPlannerApplyingRemote=false;
-        },700);
-      }
-    }).subscribe();
- }
- async function enterApp(session){
-   currentUser=session.user;
-   emailLabel.textContent=session.user.email||'Signed in';
-   bar.style.display='flex';gate.style.display='none';
-   try{await pullCloud();await startRealtime();}
-   catch(e){console.error(e);gate.style.display='flex';bar.style.display='none';msg.textContent='Database setup needed: '+(e.message||'check SQL setup and RLS policies');}
- }
- async function init(){
-   if(!window.supabase){msg.textContent='Could not load the sign-in library. Check your internet connection.';return;}
-   client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-   const {data}=await client.auth.getSession();
-   if(data.session)await enterApp(data.session);
-   client.auth.onAuthStateChange(async(event,session)=>{
-     if(session && !currentUser)await enterApp(session);
-     if(!session){currentUser=null;bar.style.display='none';gate.style.display='flex';}
-   });
- }
- document.getElementById('cloudSignIn').addEventListener('click',async()=>{
-   msg.textContent='Signing in…';
-   const {error}=await client.auth.signInWithPassword({email:document.getElementById('cloudEmail').value.trim(),password:document.getElementById('cloudPassword').value});
-   msg.textContent=error?error.message:'Signed in. Loading planner…';
- });
- document.getElementById('cloudSignUp').addEventListener('click',async()=>{
-   msg.textContent='Creating account…';
-   const {data,error}=await client.auth.signUp({email:document.getElementById('cloudEmail').value.trim(),password:document.getElementById('cloudPassword').value});
-   msg.textContent=error?error.message:(data.session?'Account created. Loading planner…':'Account created. Check your email to confirm, then sign in.');
- });
- document.getElementById('cloudSignOut').addEventListener('click',async()=>{await client.auth.signOut();location.reload();});
- init().catch(e=>{console.error(e);msg.textContent=e.message||'Unable to initialize cloud login.';});
-})();
-</script>
-
 <style>
 /* v32 final layout overrides */
 .sticky-shell{position:sticky!important;top:0!important;z-index:1000!important;background:var(--bg)!important;box-shadow:0 3px 10px #0000000a}
