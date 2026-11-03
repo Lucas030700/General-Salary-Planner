@@ -903,6 +903,13 @@ input[type="range"][data-target-slider]{
 }
 
 </style>
+<style>
+.approved-overview-heading .dashboard-month #saveDashboardMonth{
+  width:100%!important;min-height:25px!important;height:25px!important;
+  margin-top:3px!important;padding:2px 8px!important;font-size:10px!important;
+  line-height:1!important;border-radius:7px!important;
+}
+</style>
 </head>
 <body>
 <div class="sticky-shell">
@@ -923,7 +930,7 @@ input[type="range"][data-target-slider]{
 <section class="monthly-dashboard" id="monthlyDashboard">
  <div class="dashboard-heading approved-overview-heading">
   <div class="overview-title"><span class="overview-calendar" aria-hidden="true">▦</span><h2>Monthly Payroll Overview</h2></div>
-  <div class="dashboard-month"><label for="dashboardMonth">Payroll Month</label><input type="month" id="dashboardMonth" aria-label="Edit payroll month"></div>
+  <div class="dashboard-month"><label for="dashboardMonth">Payroll Month</label><input type="month" id="dashboardMonth" aria-label="Edit payroll month"><button type="button" class="primary" id="saveDashboardMonth">Save</button></div>
  </div>
  <div class="dashboard-cutoffs" id="dashboardCutoffs"></div>
  
@@ -989,9 +996,8 @@ input[type="range"][data-target-slider]{
  <section class="tabpage" id="recordsTab">
   <article class="widepanel">
    <h2>Work & pay records</h2>
-   <p class="sub">Use ＋ Add month to add a month and × to remove one. Tap a cutoff row to expand attendance and pay details. Tap the Bills amount to assign bills to that cutoff.</p>
-   <div class="btnrow"><button class="primary" id="addHistoryMonth" type="button">＋ Add month</button></div>
-   <p class="savehint" id="monthlyHistoryStatus" aria-live="polite">Showing the current month and four months ahead.</p>
+   <p class="sub">Saved payroll records appear here by month and cutoff. Select a month in Monthly Payroll Overview, then tap Save to record or update it.</p>
+   <p class="savehint" id="monthlyHistoryStatus" aria-live="polite">Changes are not added to Payroll History until you tap Save.</p>
    <div id="monthlyHistoryTable"><p class="callout">No monthly records saved yet. Save the current plan to start your history.</p></div>
    <p class="callout">Assign each monthly bill to one cutoff from the Monthly Payroll Overview. Attendance, OT and absences update the selected month’s cutoff estimates. Data stays on this device.</p>
    
@@ -1218,7 +1224,7 @@ function recalcSavedRecord(record){
 
 function renderMonthlyHistory(){
  const root=get('monthlyHistoryTable');if(!root)return;
- const sorted=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month));
+ const sorted=monthlyHistory.filter(r=>r.saved!==false).sort((a,b)=>a.month.localeCompare(b.month));
  const rows=sorted.map(r=>['first','second'].map((which,i)=>{
   if((r.deletedCutoffs||[]).includes(which))return '';
   const x=r[which]||{},label=i===0?'First':'Second';
@@ -1244,34 +1250,32 @@ function renderMonthlyHistory(){
  });
 }
 
-function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
+function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory.filter(r=>r.saved!==false)));}
 function monthKeyAdd(m,n){const [y,mo]=m.split('-').map(Number);const d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function currentMonthKey(){return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Manila'}).slice(0,7);}
-function addMonthRecord(month){if(monthlyHistory.some(x=>x.month===month))return false;const previous=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];let first,second;if(previous){first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};}else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}const record={month,first,second,savedAt:new Date().toISOString()};recalcSavedRecord(record);monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;}
-function ensureRollingMonths(){addMonthRecord(currentMonthKey());}
-get('addHistoryMonth').addEventListener('click',()=>{
- const selected=get('dashboardMonth')?.value||currentMonthKey();
- let next=monthKeyAdd(selected,1);
- while(monthlyHistory.some(r=>r.month===next))next=monthKeyAdd(next,1);
- if(addMonthRecord(next)){
-  get('dashboardMonth').value=next;
-  const record=ensureDashboardMonth(next);
-  if(record){recalcSavedRecord(record);saveMonthlyHistoryData();}
-  renderMonthlyDashboard();
-  renderMonthlyHistory();
-  get('monthlyHistoryStatus').textContent=monthLabel(next)+' added and selected.';
- }
-});
+function buildMonthRecord(month){
+ const previous=[...monthlyHistory].filter(r=>r.saved!==false).sort((a,b)=>a.month.localeCompare(b.month)).slice(-1)[0];
+ let first,second;
+ if(previous){
+  first={...JSON.parse(JSON.stringify(previous.first)),holiday:holidayPayByCutoff(month).p15,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};
+  second={...JSON.parse(JSON.stringify(previous.second)),holiday:holidayPayByCutoff(month).eom,otEntries:[],absenceDates:[],absenceDays:0,absenceDeduction:0,otPay:0};
+ }else{first=currentCutoffPlan('15',month);second=currentCutoffPlan('eom',month);}
+ const record={month,first,second,savedAt:new Date().toISOString(),saved:false};
+ recalcSavedRecord(record);return record;
+}
+function addMonthRecord(month){
+ if(monthlyHistory.some(x=>x.month===month))return false;
+ const record=buildMonthRecord(month);record.saved=true;monthlyHistory.push(record);saveMonthlyHistoryData();renderMonthlyHistory();return true;
+}
+function ensureRollingMonths(){}
 function refreshSavedMonthEstimates(){monthlyHistory.forEach(r=>{if(!r.first||!r.second)return;['first','second'].forEach(k=>{const x=r[k];x.holiday=holidayPayByCutoff(r.month)[k==='first'?'p15':'eom'];});recalcSavedRecord(r);});saveMonthlyHistoryData();renderMonthlyHistory();}
 
 function ensureDashboardMonth(month){
  if(!month)return null;
  let record=monthlyHistory.find(r=>r.month===month);
- if(!record){addMonthRecord(month);record=monthlyHistory.find(r=>r.month===month);}
+ if(!record){record=buildMonthRecord(month);monthlyHistory.push(record);}
  return record||null;
 }
-
-// Keep the selected Monthly Payroll Overview month and Payroll History in sync.
 function syncActiveDashboardMonthToHistory(){
  const month=get('dashboardMonth')?.value||currentMonthKey();
  if(!month)return;
@@ -1279,10 +1283,21 @@ function syncActiveDashboardMonthToHistory(){
  if(!record)return;
  syncSelectedMonthBillAmounts(record);
  recalcSavedRecord(record);
+ // Deliberately do not persist or publish unsaved edits to Payroll History here.
+}
+get('saveDashboardMonth')?.addEventListener('click',()=>{
+ const month=get('dashboardMonth')?.value;
+ if(!month){get('monthlyHistoryStatus').textContent='Choose a payroll month first.';return;}
+ const record=ensureDashboardMonth(month);
+ if(!record)return;
+ syncSelectedMonthBillAmounts(record);
+ recalcSavedRecord(record);
+ record.saved=true;
+ record.savedAt=new Date().toISOString();
  saveMonthlyHistoryData();
  renderMonthlyHistory();
-}
-
+ get('monthlyHistoryStatus').textContent=monthLabel(month)+' saved to Payroll History. Saving again will update the same month and cutoffs.';
+});
 function scheduledStatsForRange(minDate,maxDate){
  let days=0,hours=0;
  const [sy,sm,sd]=minDate.split('-').map(Number),[ey,em,ed]=maxDate.split('-').map(Number);
@@ -1701,7 +1716,7 @@ function renderPayCalendar(){
  get('minimumPay').textContent=fmt(base);get('maximumPay').textContent=fmt(Math.max(base,basic+maxOT-sss-ph-pi-taxMax));
 }
 get('payCalendarMonth')?.addEventListener('change',renderPayCalendar);
-try{monthlyHistory=JSON.parse(localStorage.getItem('salaryMonthlyHistory')||'[]')||[];}catch(e){monthlyHistory=[];}
+try{monthlyHistory=(JSON.parse(localStorage.getItem('salaryMonthlyHistory')||'[]')||[]).map(r=>({...r,saved:true}));}catch(e){monthlyHistory=[];}
 // Existing history is loaded here; rolling months are seeded after saved planner settings are restored.
 function state(){let s={};ids.forEach(id=>s[id]=get(id).type==='checkbox'?get(id).checked:get(id).value);expenseDefs.forEach(([id])=>s[id+'Cutoff']=get(id+'Cutoff').value);s.weeklySchedule=weeklySchedule;s.workdays=[...document.querySelectorAll('.workday')].map(x=>({day:x.value,checked:x.checked}));s.holidayHoursPerDay=get('holidayHoursPerDay').value;s.holidayNightPerDay=get('holidayNightPerDay').value;s.assumeHolidayWorked=get('assumeHolidayWorked').checked;return s}
 function applyState(s){if(s.weeklySchedule&&typeof s.weeklySchedule==='object'){weeklySchedule={...weeklySchedule,...s.weeklySchedule};}else if(Array.isArray(s.workdays)){s.workdays.forEach(w=>{const old=weeklySchedule[Number(w.day)]||{};weeklySchedule[Number(w.day)]={...old,working:!!w.checked};});}ids.forEach(id=>{if(s[id]!==undefined){if(get(id).type==='checkbox')get(id).checked=!!s[id];else get(id).value=s[id]}});expenseDefs.forEach(([id])=>{if(s[id+'Cutoff'])get(id+'Cutoff').value=s[id+'Cutoff']});if(s.baseHoursWeek&&get('baseHoursWeek'))get('baseHoursWeek').value=s.baseHoursWeek;if(Array.isArray(s.workdays))s.workdays.forEach(w=>{const el=document.querySelector('.workday[value=\"'+w.day+'\"]');if(el)el.checked=!!w.checked});if(s.holidayHoursPerDay)get('holidayHoursPerDay').value=s.holidayHoursPerDay;if(s.holidayNightPerDay)get('holidayNightPerDay').value=s.holidayNightPerDay;if(s.assumeHolidayWorked!==undefined)get('assumeHolidayWorked').checked=!!s.assumeHolidayWorked;syncLegacyWorkdays();renderWeeklySchedule();get('dutyStart').value=weeklySchedule[1].start;get('dutyEnd').value=weeklySchedule[1].end;rebuildAutoHolidayEntries();calculate()}

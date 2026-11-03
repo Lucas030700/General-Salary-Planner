@@ -1,4 +1,4 @@
-const CACHE='salary-planner-history-add-month-v8';
+const CACHE='salary-planner-manual-save-v9';
 const APP_SHELL=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
