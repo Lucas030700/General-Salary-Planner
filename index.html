@@ -814,6 +814,25 @@ dialog{
 .attendance-dialog [data-dialog-save]{min-height:40px!important;min-width:100px!important}
 .attendance-day.absent{background:#ffe5e5!important;border:1px solid #d77d7d!important;color:#a52b2b!important;box-shadow:inset 0 0 0 1px #efc1c1!important}
 
+
+/* Sticky planner masthead + navigation as a single compact unit */
+.sticky-shell{
+ position:sticky!important;top:0!important;z-index:1500!important;
+ display:flex!important;flex-direction:column!important;
+ padding-top:env(safe-area-inset-top,0px)!important;
+ background:var(--bg)!important;
+ isolation:isolate!important;
+}
+.sticky-shell header{flex:0 0 auto!important}
+.sticky-shell .tabbar{flex:0 0 auto!important;position:relative!important;z-index:2!important}
+.cutoff-dashboard-card{position:relative!important;overflow:visible!important}
+.cutoff-card-heading{
+ position:sticky!important;top:var(--planner-sticky-offset,145px)!important;
+ z-index:20!important;
+ border-radius:12px 12px 0 0!important;
+ box-shadow:0 2px 5px #17342612!important;
+}
+
 </style>
 </head>
 <body>
@@ -864,14 +883,6 @@ dialog{
     </div>
    <div class="section"><div class="section-head"><h3>Additional & regularization benefits</h3><button type="button" class="small-action" id="addBenefit">＋ Add</button></div><p class="sub">Add, edit or remove any company benefit, including regularization and other additional benefits. Benefits are listed separately; include them in payroll estimates only after confirming their tax and payroll treatment.</p><div id="customBenefits"></div></div>
    <p class="callout">Overtime and night differential are recorded by date inside each cutoff under Payroll History.</p>
-   <div class="section"><h3>Estimated payroll deductions</h3>
-    <details class="deduction-detail"><summary><span>SSS employee contribution</span><b id="sss">₱1,750</b><span class="chevron">⌄</span></summary><div class="formula"><b>How SSS is estimated</b><span id="sssFormula">Estimated employee share using the applicable SSS contribution schedule and Monthly Salary Credit. Verify the current contribution table.</span></div></details>
-    <details class="deduction-detail"><summary><span>PhilHealth employee contribution</span><b id="philhealth">₱1,200</b><span class="chevron">⌄</span></summary><div class="formula"><b>How PhilHealth is estimated</b>Estimated employee share based on the applicable PhilHealth contribution rate and monthly salary. Verify the current rate and salary ceiling.</div></details>
-    <details class="deduction-detail"><summary><span>Pag-IBIG employee contribution</span><b id="pagibig">₱200</b><span class="chevron">⌄</span></summary><div class="formula"><b>How Pag-IBIG is estimated</b>2% × ₱10,000 maximum Fund Salary = ₱200 employee share for monthly compensation above ₱1,500.</div></details>
-    <details class="deduction-detail"><summary><span>Withholding tax estimate</span><b id="tax">₱0</b><span class="chevron">⌄</span></summary><div class="formula"><b>Tax computation</b>Annualize estimated monthly taxable compensation, apply Philippine individual income-tax brackets effective 2023 onward, then divide annual tax by 12. For ₱400,000–₱800,000 annual taxable income: ₱22,500 + 20% of the amount above ₱400,000. Other brackets are handled automatically.</div><div class="lineitem"><span>Estimated monthly taxable compensation</span><b id="calcTaxable">₱0</b></div><div class="lineitem"><span>Estimated annual taxable compensation</span><b id="calcAnnualTaxable">₱0</b></div><div class="lineitem"><span>Estimated annual income tax</span><b id="calcAnnualTax">₱0</b></div><div class="formula"><b>Taxable compensation assumption</b>Basic salary + estimated OT + night differential + applicable holiday premium − SSS − PhilHealth − Pag-IBIG. User-added benefits are excluded because tax treatment varies by benefit and employer. Actual withholding may differ depending on allowance classification and year-to-date reconciliation.</div></details>
-    <div class="lineitem"><span><b>Total deductions</b></span><b id="deductions">₱0</b></div>
-    <p class="callout">These are estimates, not confirmed payroll deductions. Employer shares are not deducted from your pay. Check your first payslip or ask your company payroll to confirm applicable contribution tables and tax treatment.</p>
-   </div>
    <p class="callout">Payroll estimates only. Confirm contribution tables, tax treatment, OT divisor, and benefit eligibility with your company HR/payroll.</p>
     </div>
    </details>
@@ -1122,7 +1133,7 @@ function renderMonthlyHistory(){
  const rows=sorted.map(r=>['first','second'].map((which,i)=>{
   const x=r[which]||{},label=i===0?'1st':'2nd';
   const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
-  return `<tr><td>${monthLabel(r.month)}</td><td>${label} cutoff</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
+  return `<tr><td>${new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'})}</td><td>${label} cutoff</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
  root.innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -1516,6 +1527,12 @@ showDashboard();
 renderMonthlyDashboard();
 renderPayCalendar();
 
+function updatePlannerStickyOffset(){
+ const shell=document.querySelector('.sticky-shell');
+ if(shell)document.documentElement.style.setProperty('--planner-sticky-offset',Math.ceil(shell.getBoundingClientRect().height)+'px');
+}
+window.addEventListener('resize',updatePlannerStickyOffset,{passive:true});
+updatePlannerStickyOffset();
 function showDashboard(){get('monthlyDashboard').hidden=false;document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));}
 document.querySelectorAll('.tabbtn').forEach(btn=>btn.addEventListener('click',()=>{
  const wasActive=btn.classList.contains('active');
