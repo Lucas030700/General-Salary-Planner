@@ -886,8 +886,7 @@ input[type="range"][data-target-slider]{
 <section class="monthly-dashboard" id="monthlyDashboard">
  <div class="dashboard-heading approved-overview-heading">
   <div class="overview-title"><span class="overview-calendar" aria-hidden="true">▦</span><h2>Monthly Payroll Overview</h2></div>
-  <div class="overview-divider" aria-hidden="true"></div>
-  <div class="dashboard-month"><label for="dashboardMonth">Payroll Month</label><input type="month" id="dashboardMonth"></div>
+  <div class="dashboard-month"><label for="dashboardMonth">Payroll Month</label><input type="month" id="dashboardMonth" aria-label="Edit payroll month"></div>
  </div>
  <div class="dashboard-cutoffs" id="dashboardCutoffs"></div>
  
@@ -955,7 +954,7 @@ input[type="range"][data-target-slider]{
    <p class="sub">Use ＋ Add month to add a month and × to remove one. Tap a cutoff row to expand attendance and pay details. Tap the Bills amount to assign bills to that cutoff.</p>
    <div class="btnrow"><button class="primary" id="addHistoryMonth" type="button">＋ Add month</button></div>
    <p class="savehint" id="monthlyHistoryStatus" aria-live="polite">Showing the current month and four months ahead.</p>
-   <div style="overflow-x:auto" id="monthlyHistoryTable"><p class="callout">No monthly records saved yet. Save the current plan to start your history.</p></div>
+   <div id="monthlyHistoryTable"><p class="callout">No monthly records saved yet. Save the current plan to start your history.</p></div>
    <p class="callout">Assign each monthly bill to one cutoff from the Monthly Payroll Overview. Attendance, OT and absences update the selected month’s cutoff estimates. Data stays on this device.</p>
    
   </article>
@@ -1184,11 +1183,12 @@ function renderMonthlyHistory(){
  const sorted=[...monthlyHistory].sort((a,b)=>a.month.localeCompare(b.month));
  if(!sorted.length){root.innerHTML='<p class="callout">No payroll history yet.</p>';return;}
  const rows=sorted.map(r=>['first','second'].map((which,i)=>{
-  const x=r[which]||{},label=i===0?'1st':'2nd';
+  const x=r[which]||{},label=i===0?'First':'Second';
   const remaining=(Number(x.paySuggested)||0)-(Number(x.bills)||0);
-  return `<tr><td>${new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'})}</td><td>${label} cutoff</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
+  const month=new Date(Number(r.month.slice(0,4)),Number(r.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'short',year:'numeric'});
+  return `<tr><td>${month}</td><td>${label}</td><td>${fmt(x.paySuggested||0)}</td><td>${fmt(x.bills||0)}</td><td class="${remaining<0?'negative':'positive'}">${fmt(remaining)}</td></tr>`;
  }).join('')).join('');
- root.innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
+ root.innerHTML=`<table class="payroll-history-table"><colgroup><col style="width:22%"><col style="width:17%"><col style="width:21%"><col style="width:19%"><col style="width:21%"></colgroup><thead><tr><th>Month</th><th>Cutoff</th><th>Net pay</th><th>Bills</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function saveMonthlyHistoryData(){localStorage.setItem('salaryMonthlyHistory',JSON.stringify(monthlyHistory));}
@@ -1869,6 +1869,68 @@ main.content-main{
  .approved-overview-heading{grid-template-columns:minmax(0,1fr) 1px 112px!important;gap:6px!important;padding:6px!important}
  .approved-overview-heading .dashboard-month{width:112px!important;max-width:112px!important}
  .approved-overview-heading h2{font-size:12px!important}
+}
+
+</style>
+<style>
+
+/* Month remains editable, but remove the surrounding selector box */
+.approved-overview-heading{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:8px!important;padding:7px 8px!important;min-height:0!important;
+}
+.approved-overview-heading .overview-divider{display:none!important}
+.approved-overview-heading .overview-title{flex:1 1 auto!important;min-width:0!important}
+.approved-overview-heading .dashboard-month{
+ flex:0 0 auto!important;width:auto!important;max-width:145px!important;min-width:0!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:2px!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;padding:0!important;margin:0!important;
+}
+.approved-overview-heading .dashboard-month label{
+ display:block!important;text-align:center!important;font-size:9px!important;
+ margin:0!important;line-height:1.1!important;
+}
+.approved-overview-heading .dashboard-month input{
+ width:100%!important;min-width:0!important;height:26px!important;min-height:26px!important;
+ padding:1px 2px!important;border:0!important;border-radius:0!important;
+ border-bottom:1px solid var(--line)!important;background:transparent!important;
+ box-shadow:none!important;text-align:center!important;font-size:12px!important;
+ color:var(--ink)!important;outline-offset:2px!important;
+}
+@media(max-width:380px){
+ .approved-overview-heading h2{font-size:12px!important}
+ .approved-overview-heading .dashboard-month{max-width:120px!important}
+ .approved-overview-heading .dashboard-month input{font-size:11px!important}
+}
+
+</style>
+<style>
+
+/* Payroll history: all five columns fit on one iPhone screen */
+#monthlyHistoryTable{
+ width:100%!important;max-width:100%!important;overflow-x:hidden!important;
+}
+#monthlyHistoryTable .payroll-history-table{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ table-layout:fixed!important;border-collapse:collapse!important;
+}
+#monthlyHistoryTable .payroll-history-table th,
+#monthlyHistoryTable .payroll-history-table td{
+ box-sizing:border-box!important;width:auto!important;
+ padding:8px 2px!important;text-align:center!important;
+ white-space:normal!important;overflow-wrap:anywhere!important;
+ font-size:clamp(8px,2.55vw,11px)!important;line-height:1.2!important;
+ border-bottom:1px solid var(--line)!important;
+}
+#monthlyHistoryTable .payroll-history-table th{
+ font-size:clamp(8px,2.4vw,10px)!important;font-weight:800!important;
+}
+#monthlyHistoryTable .payroll-history-table td:first-child,
+#monthlyHistoryTable .payroll-history-table th:first-child{text-align:center!important}
+@media(max-width:380px){
+ #monthlyHistoryTable .payroll-history-table th,
+ #monthlyHistoryTable .payroll-history-table td{padding:7px 1px!important;font-size:8px!important}
 }
 
 </style>
